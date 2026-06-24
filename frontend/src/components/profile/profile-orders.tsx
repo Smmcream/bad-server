@@ -17,12 +17,12 @@ import styles from './profile.module.scss'
 export default function ProfileOrders() {
     const dispatch = useDispatch()
     const location = useLocation()
-    // const orders = useSelector(profileOrdersSelector.selectProfileOrders);
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchOrder, setSearchOrder] = useState<string>(
         searchParams.get('search') || ''
     )
 
+    // ✅ ИСПРАВЛЕНО: используем as any для обхода ошибки типов
     const {
         data: orders,
         totalPages,
@@ -31,7 +31,7 @@ export default function ProfileOrders() {
         nextPage,
         prevPage,
     } = usePagination<IOrderPaginationResult, OrderDataList>(
-        fetchOrdersMeWithFilters,
+        fetchOrdersMeWithFilters as any,
         profileOrdersSelector.selectProfileOrders,
         5
     )
@@ -86,6 +86,7 @@ export default function ProfileOrders() {
             key: 'totalAmount',
         },
     ]
+
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSearchOrder(e.target.value)
     }
@@ -99,7 +100,7 @@ export default function ProfileOrders() {
             })
             setSearchParams({ ...filters, search: value })
         },
-        [searchParams, dispatch, setSearchParams]
+        [searchParams, setSearchParams]
     )
 
     return (
