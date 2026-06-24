@@ -10,7 +10,7 @@ import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
-const { PORT = 80 } = process.env  // ✅ ИЗМЕНЕНО НА 80
+const { PORT = 3000 } = process.env  // ✅ ПОРТ 3000
 const app = express()
 
 const limiter = rateLimit({
