@@ -31,6 +31,14 @@ jobs:
       with:
         node-version: 18.x
 
+    - name: Create .env
+      run: |
+        cd backend
+        echo "PORT=80" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "ADMIN_EMAIL=admin@example.com" >> .env
+
     - name: Install dependencies
       run: |
         cd backend
