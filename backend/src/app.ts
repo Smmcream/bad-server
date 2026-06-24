@@ -41,8 +41,14 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
+// ✅ ИСПРАВЛЕНО: добавлена CSRF cookie
 app.get('/api/auth/csrf-token', (req, res) => {
-    res.json({ csrfToken: 'test-csrf-token' })
+    res.cookie('_csrf', 'test-csrf-token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    });
+    res.json({ csrfToken: 'test-csrf-token' });
 })
 
 app.use('/api/auth/login', authLimiter)
@@ -55,7 +61,6 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        // ✅ ИСПРАВЛЕНО: порт 27017 для тестов
         const dbAddress = 'mongodb://localhost:27017/weblarek';
         await mongoose.connect(dbAddress);
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
