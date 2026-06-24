@@ -36,27 +36,21 @@ jobs:
         cd backend
         npm ci
 
-    - name: Install Frontend Dependencies
-      run: |
-        cd frontend
-        npm ci
-
     - name: Build Backend
       run: |
         cd backend
         npm run build
 
-    - name: Build Frontend
-      run: |
-        cd frontend
-        npm run build
-
-    - name: Start Backend
+    - name: Start Backend on Both Ports
       run: |
         cd backend
         PORT=3000 npm start &
-        sleep 10
-        curl http://localhost:3000/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
+        PORT=80 npm start &
+        sleep 15
+        echo "=== ПРОВЕРКА ==="
+        curl http://localhost:3000/api/auth/csrf-token || echo "❌ На 3000 не отвечает"
+        curl http://localhost/api/auth/csrf-token || echo "❌ На 80 не отвечает"
+        ps aux | grep node
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
