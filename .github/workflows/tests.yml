@@ -31,6 +31,38 @@ jobs:
       with:
         node-version: 18.x
 
+    - name: Debug - show code
+      run: |
+        echo "=== Содержимое backend ==="
+        ls -la backend
+        echo "=== Содержимое backend/src ==="
+        ls -la backend/src
+        echo "=== Содержимое backend/src/controllers ==="
+        ls -la backend/src/controllers
+
+    - name: Create .env
+      run: |
+        cd backend
+        echo "PORT=3000" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "ADMIN_EMAIL=admin@example.com" >> .env
+        cat .env
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        npm run build
+
+    - name: Test start
+      run: |
+        cd backend
+        npm start &
+        sleep 10
+        echo "=== Проверка бэкенда ==="
+        curl -v http://localhost:3000/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
+
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
