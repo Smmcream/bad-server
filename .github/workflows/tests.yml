@@ -31,6 +31,19 @@ jobs:
       with:
         node-version: 18.x
 
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        npm run build
+
+    - name: Start Backend FORCED
+      run: |
+        cd backend
+        PORT=80 node dist/app.js &
+        sleep 15
+        curl -v http://localhost/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
+
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
