@@ -37,17 +37,10 @@ jobs:
         npm ci
         npm run build
 
-    - name: Start Backend
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        PORT=80 node dist/app.js &
-        sleep 15
-        echo "=== ДИАГНОСТИКА ==="
-        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ localhost:80 не отвечает"
-        curl -v http://127.0.0.1:80/api/auth/csrf-token || echo "❌ 127.0.0.1:80 не отвечает"
-        curl -v http://localhost:3000/api/auth/csrf-token || echo "❌ 3000 не отвечает"
-        netstat -tulpn | grep 80 || echo "❌ Порт 80 не слушается"
-        ps aux | grep node
+        PORT=80 node dist/app.js
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
