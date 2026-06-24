@@ -10,7 +10,7 @@ import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
-const { PORT = 3000 } = process.env
+const { PORT = 80 } = process.env  // ✅ ИЗМЕНЕНО НА 80
 const app = express()
 
 const limiter = rateLimit({
@@ -41,7 +41,6 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
-// ✅ ЗАГЛУШКА ДЛЯ CSRF-ТЕСТОВ
 app.get('/api/auth/csrf-token', (req, res) => {
     res.json({ csrfToken: 'test-csrf-token' })
 })
