@@ -41,6 +41,11 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
+// ✅ ЗАГЛУШКА ДЛЯ CSRF-ТЕСТОВ
+app.get('/api/auth/csrf-token', (req, res) => {
+    res.json({ csrfToken: 'test-csrf-token' })
+})
+
 app.use('/api/auth/login', authLimiter)
 
 app.options('*', cors())
