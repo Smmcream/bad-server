@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 })
 
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
-    res.json({ csrfToken: 'test-csrf-token-for-tests' })
+    res.json({ csrfToken: (req as any).csrfToken() })
 })
 
 app.use('/api/auth/login', authLimiter)

@@ -14,7 +14,6 @@ declare module 'csrf-tokens' {
     export = csrf;
 }
 
-// ✅ РАСШИРЯЕМ REQUEST ДЛЯ CSRF
 declare global {
     namespace Express {
         interface Request {
