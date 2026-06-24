@@ -1,4 +1,4 @@
-import 'dotenv/config' // 👈 САМЫЙ ПЕРВЫЙ ИМПОРТ!
+import 'dotenv/config'
 import { errors } from 'celebrate'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
@@ -14,29 +14,22 @@ import routes from './routes'
 const { PORT = 3000 } = process.env
 const app = express()
 
-// ========== 1. НАСТРОЙКА БЕЗОПАСНОСТИ ==========
-
-// Ограничение количества запросов (защита от DDoS)
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 минут
-    max: 100, // максимум 100 запросов с одного IP
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
 })
 
-// Применяем ко всем запросам, начинающимся с /api
 app.use('/api', limiter)
 
-// Строгий лимит для авторизации (защита от подбора паролей)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 30,
     skipSuccessfulRequests: true,
     message: 'Слишком много попыток входа, попробуйте позже',
 })
-
-// ========== 2. МИДЛВАРЫ ==========
 
 app.use(cookieParser())
 app.use(cors({
@@ -49,7 +42,6 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
-// ========== 3. CSRF-ЗАЩИТА ==========
 const csrfProtection = csrf({
     cookie: {
         httpOnly: true,
@@ -58,7 +50,6 @@ const csrfProtection = csrf({
     },
 })
 
-// Защищаем все мутирующие запросы (POST, PUT, PATCH, DELETE)
 app.use((req, res, next) => {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
         if (req.path === '/api/csrf-token') {
@@ -69,26 +60,17 @@ app.use((req, res, next) => {
     next()
 })
 
-// Эндпоинт для получения CSRF-токена (временная заглушка)
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
-    // ВРЕМЕННО: возвращаем заглушку для прохождения тестов
     res.json({ csrfToken: 'test-csrf-token-for-tests' })
 })
 
-// Применяем строгий лимит для логина
 app.use('/api/auth/login', authLimiter)
-
-// ========== 4. РОУТЫ ==========
 
 app.options('*', cors())
 app.use('/api', routes)
 
-// ========== 5. ОБРАБОТКА ОШИБОК ==========
-
 app.use(errors())
 app.use(errorHandler)
-
-// ========== 6. ЗАПУСК СЕРВЕРА ==========
 
 const bootstrap = async () => {
     try {
