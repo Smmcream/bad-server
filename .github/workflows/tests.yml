@@ -38,6 +38,7 @@ jobs:
         echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
+        cat .env
 
     - name: Install dependencies
       run: |
@@ -45,10 +46,10 @@ jobs:
         npm ci
         npm run build
 
-    - name: Start Backend on Port 80
+    - name: Start Backend on Port 80 with sudo
       run: |
         cd backend
-        PORT=80 node dist/app.js
+        sudo PORT=80 node dist/app.js
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
