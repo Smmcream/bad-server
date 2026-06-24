@@ -51,13 +51,7 @@ jobs:
         cd backend
         sudo PORT=80 node dist/app.js &
         sleep 15
-
-    - name: Check Backend
-      run: |
-        echo "=== ПРОВЕРКА ==="
-        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://localhost:80/api/products || echo "❌ Товары не доступны"
-        ps aux | grep node
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
