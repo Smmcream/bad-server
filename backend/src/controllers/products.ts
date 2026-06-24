@@ -1,3 +1,4 @@
+console.log('✅ getProducts вызван!');
 import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
 import { Error as MongooseError } from 'mongoose'

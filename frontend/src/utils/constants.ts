@@ -1,7 +1,8 @@
 import styles from '@components/card/card.module.scss'
 
-export const API_URL = `${import.meta.env.VITE_API_ORIGIN}`
-export const CDN_URL = `${import.meta.env.VITE_API_ORIGIN}`
+// ✅ ИСПРАВЛЕНО: добавляем /api к адресу бэкенда
+export const API_URL = 'http://localhost:3000/api'
+export const CDN_URL = 'http://localhost:3000'
 
 export type OptionType = {
     title: string

@@ -69,17 +69,10 @@ export default function ProfileOrderDetail() {
                 label: 'Ваш комментарий к заказу',
                 extraClass: styles.profile__gridRowFullWidth,
                 render: (dataInfo: OrderData) => (
-                    <>
-                        {dataInfo.comment ? (
-                            <div
-                                dangerouslySetInnerHTML={{
-                                    __html: dataInfo.comment,
-                                }}
-                            />
-                        ) : (
-                            'Комментариев нет'
-                        )}
-                    </>
+                    // ✅ БЕЗОПАСНО: экранируем комментарий, но сохраняем переносы строк
+                    <div style={{ whiteSpace: 'pre-wrap' }}>
+                        {dataInfo.comment || 'Комментариев нет'}
+                    </div>
                 ),
             },
         ],

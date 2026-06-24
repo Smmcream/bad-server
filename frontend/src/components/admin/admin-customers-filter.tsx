@@ -10,6 +10,9 @@ import Filter from '../filter'
 import styles from './admin.module.scss'
 import { customersFilterFields } from './helpers/customersFilterFields'
 
+// ✅ БЕЗОПАСНО: используем конкретный тип вместо any
+type FilterValue = string | number | { value: string; label: string } | undefined;
+
 export default function AdminFilterCustomers() {
     const navigate = useNavigate()
     const dispatch = useDispatch()
@@ -18,15 +21,17 @@ export default function AdminFilterCustomers() {
     const filterCustomersOption = useSelector(
         customersSelector.selectFilterOption
     )
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-    const handleFilter = (filters: Record<string, any>) => {
+    // ✅ ИСПРАВЛЕНО: заменяем any на Record<string, FilterValue>
+    const handleFilter = (filters: Record<string, FilterValue>) => {
         dispatch(updateFilter({ ...filters }))
         const queryParams: { [key: string]: string } = {}
         Object.entries(filters).forEach(([key, value]) => {
             if (value) {
                 queryParams[key] =
-                    typeof value === 'object' ? value.value : value.toString()
+                    typeof value === 'object' && value !== null && 'value' in value
+                        ? value.value
+                        : value.toString()
             }
         })
         setSearchParams(queryParams)

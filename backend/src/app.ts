@@ -1,11 +1,12 @@
+import 'dotenv/config' // 👈 САМЫЙ ПЕРВЫЙ ИМПОРТ!
 import { errors } from 'celebrate'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import 'dotenv/config'
 import express, { json, urlencoded } from 'express'
 import mongoose from 'mongoose'
 import path from 'path'
-import { DB_ADDRESS } from './config'
+import rateLimit from 'express-rate-limit'
+// import csrf from 'csrf-tokens' // 👈 ВРЕМЕННО ОТКЛЮЧЕНО
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
@@ -13,31 +14,93 @@ import routes from './routes'
 const { PORT = 3000 } = process.env
 const app = express()
 
-app.use(cookieParser())
+// ========== 1. НАСТРОЙКА БЕЗОПАСНОСТИ ==========
 
-app.use(cors())
-// app.use(cors({ origin: ORIGIN_ALLOW, credentials: true }));
-// app.use(express.static(path.join(__dirname, 'public')));
+// Ограничение количества запросов (защита от DDoS)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 минут
+    max: 100, // максимум 100 запросов с одного IP
+    message: 'Слишком много запросов, попробуйте позже',
+    standardHeaders: true,
+    legacyHeaders: false,
+})
+
+// Применяем ко всем запросам, начинающимся с /api
+app.use('/api', limiter)
+
+// Строгий лимит для авторизации (защита от подбора паролей)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    skipSuccessfulRequests: true,
+    message: 'Слишком много попыток входа, попробуйте позже',
+})
+
+// ========== 2. МИДЛВАРЫ ==========
+
+app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:5173', // адрес вашего фронтенда
+    credentials: true, // разрешаем отправку cookies
+}))
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
+// ========== 3. CSRF-ЗАЩИТА (ВРЕМЕННО ОТКЛЮЧЕНА) ==========
+// const csrfProtection = csrf({
+//     cookie: {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === 'production',
+//         sameSite: 'lax',
+//     },
+// })
+
+// // Защищаем все мутирующие запросы (POST, PUT, PATCH, DELETE)
+// app.use((req, res, next) => {
+//     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+//         // Исключаем эндпоинт получения CSRF-токена
+//         if (req.path === '/api/csrf-token') {
+//             return next()
+//         }
+//         return csrfProtection(req, res, next)
+//     }
+//     next()
+// })
+
+// // Эндпоинт для получения CSRF-токена
+// app.get('/api/csrf-token', csrfProtection, (req, res) => {
+//     res.json({ csrfToken: req.csrfToken() })
+// })
+
+// Применяем строгий лимит для логина
+app.use('/api/auth/login', authLimiter)
+
+// ========== 4. РОУТЫ ==========
+
 app.options('*', cors())
-app.use(routes)
+app.use('/api', routes)
+
+// ========== 5. ОБРАБОТКА ОШИБОК ==========
+
 app.use(errors())
 app.use(errorHandler)
 
-// eslint-disable-next-line no-console
+// ========== 6. ЗАПУСК СЕРВЕРА ==========
 
 const bootstrap = async () => {
     try {
-        await mongoose.connect(DB_ADDRESS)
-        await app.listen(PORT, () => console.log('ok'))
+        // ✅ ИСПРАВЛЕНО: добавляем логин и пароль для MongoDB
+        const dbAddress = 'mongodb://root:example@localhost:27018/weblarek?authSource=admin';
+        await mongoose.connect(dbAddress);
+        await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
-        console.error(error)
+        console.error('❌ Ошибка при запуске сервера:', error)
     }
 }
 
 bootstrap()
+
+export default app

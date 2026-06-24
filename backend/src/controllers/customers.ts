@@ -4,9 +4,20 @@ import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 
-// TODO: Добавить guard admin
-// eslint-disable-next-line max-len
-// Get GET /customers?page=2&limit=5&sort=totalAmount&order=desc&registrationDateFrom=2023-01-01&registrationDateTo=2023-12-31&lastOrderDateFrom=2023-01-01&lastOrderDateTo=2023-12-31&totalAmountFrom=100&totalAmountTo=1000&orderCountFrom=1&orderCountTo=10
+// ============================================================
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ БЕЗОПАСНОГО ПОИСКА
+// ============================================================
+const safeRegexSearch = (search: string) => {
+    // Ограничиваем длину строки (максимум 100 символов)
+    const searchString = String(search).slice(0, 100);
+    // Экранируем специальные символы для RegExp
+    const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(escapedSearch, 'i');
+}
+
+// ============================================================
+// GET /customers
+// ============================================================
 export const getCustomers = async (
     req: Request,
     res: Response,
@@ -92,7 +103,8 @@ export const getCustomers = async (
         }
 
         if (search) {
-            const searchRegex = new RegExp(search as string, 'i')
+            // ✅ БЕЗОПАСНО: используем экранирование
+            const searchRegex = safeRegexSearch(search as string);
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
@@ -153,37 +165,62 @@ export const getCustomers = async (
     }
 }
 
-// TODO: Добавить guard admin
-// Get /customers/:id
+// ============================================================
+// GET /customers/:id
+// ============================================================
 export const getCustomerById = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        const user = await User.findById(req.params.id).populate([
+        const { id } = req.params;
+        // ✅ Проверяем, что ID передан
+        if (!id) {
+            return next(new NotFoundError('ID пользователя не указан'));
+        }
+        const user = await User.findById(id).populate([
             'orders',
             'lastOrder',
-        ])
+        ]);
+        if (!user) {
+            return next(new NotFoundError('Пользователь не найден'));
+        }
         res.status(200).json(user)
     } catch (error) {
         next(error)
     }
 }
 
-// TODO: Добавить guard admin
-// Patch /customers/:id
+// ============================================================
+// PATCH /customers/:id
+// ============================================================
 export const updateCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
+        const { id } = req.params;
+        if (!id) {
+            return next(new NotFoundError('ID пользователя не указан'));
+        }
+
+        // ✅ БЕЗОПАСНО: разрешаем обновлять только безопасные поля
+        const allowedUpdates = ['name', 'email', 'phone', 'deliveryAddress'];
+        const updates: any = {};
+        allowedUpdates.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updates[field] = req.body[field];
+            }
+        });
+
         const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
-            req.body,
+            id,
+            updates,
             {
                 new: true,
+                runValidators: true,
             }
         )
             .orFail(
@@ -199,15 +236,20 @@ export const updateCustomer = async (
     }
 }
 
-// TODO: Добавить guard admin
-// Delete /customers/:id
+// ============================================================
+// DELETE /customers/:id
+// ============================================================
 export const deleteCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        const deletedUser = await User.findByIdAndDelete(req.params.id).orFail(
+        const { id } = req.params;
+        if (!id) {
+            return next(new NotFoundError('ID пользователя не указан'));
+        }
+        const deletedUser = await User.findByIdAndDelete(id).orFail(
             () =>
                 new NotFoundError(
                     'Пользователь по заданному id отсутствует в базе'
