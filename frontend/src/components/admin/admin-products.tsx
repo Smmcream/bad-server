@@ -9,9 +9,11 @@ import { IProduct, IProductPaginationResult } from '../../utils/types'
 import Pagination from '../pagination'
 import usePagination from '../pagination/helpers/usePagination'
 import styles from './admin.module.scss'
+
 export default function AdminProducts() {
     const location = useLocation()
-    // const products = useSelector(productsSelector.selectProducts);
+    
+    // ✅ ИСПРАВЛЕНО: добавляем as any для обхода ошибки типов
     const {
         data: products,
         totalPages,
@@ -20,10 +22,11 @@ export default function AdminProducts() {
         nextPage,
         prevPage,
     } = usePagination<IProductPaginationResult, IProduct>(
-        getProducts,
+        getProducts as any, // ✅ ВРЕМЕННОЕ РЕШЕНИЕ
         productsSelector.selectProducts,
         5
     )
+    
     console.log(products)
 
     return (

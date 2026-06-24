@@ -4,7 +4,9 @@ import { RootState } from '@store/store'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-interface PaginationResult<_, U> {
+type FetchParams = Record<string, string | number | undefined>;
+
+interface PaginationResult<U> {
     data: U[]
     totalPages: number
     currentPage: number
@@ -15,11 +17,12 @@ interface PaginationResult<_, U> {
     setLimit: (limit: number) => void
 }
 
+// Возвращаем T, но используем его
 const usePagination = <T, U>(
-    asyncAction: AsyncThunk<T, Record<string, unknown>, any>,
+    asyncAction: AsyncThunk<T, FetchParams, any>,
     selector: (state: RootState) => U[],
     defaultLimit: number
-): PaginationResult<T, U> => {
+): PaginationResult<U> => {
     const dispatch = useDispatch()
     const data = useSelector(selector)
     const [searchParams, setSearchParams] = useSearchParams()
@@ -32,25 +35,28 @@ const usePagination = <T, U>(
 
     const limit = Number(searchParams.get('limit')) || defaultLimit
 
-    const fetchData = async (params: Record<string, any>) => {
+    const fetchData = async (params: FetchParams) => {
         const response: any = await dispatch(asyncAction(params))
         setTotalPages(response.payload.pagination.totalPages)
     }
 
     useEffect(() => {
-        const params = Object.fromEntries(searchParams.entries())
-        fetchData({ ...params, page: currentPage, limit }).then(() => {
+        const params: FetchParams = {
+            ...Object.fromEntries(searchParams.entries()),
+            page: currentPage,
+            limit,
+        }
+        fetchData(params).then(() => {
             if (data.length === 0 && currentPage > 1) {
                 setPage(1)
             }
         })
     }, [currentPage, limit, searchParams])
 
-    const updateURL = (newParams: Record<string, any>) => {
-        3
+    const updateURL = (newParams: FetchParams) => {
         const updatedParams = new URLSearchParams(searchParams)
         Object.entries(newParams).forEach(([key, value]) => {
-            if (value !== undefined) {
+            if (value !== undefined && value !== null) {
                 updatedParams.set(key, value.toString())
             } else {
                 updatedParams.delete(key)
@@ -77,7 +83,7 @@ const usePagination = <T, U>(
     }
 
     const setLimit = (newLimit: number) => {
-        updateURL({ page: 1, limit: newLimit }) // При изменении лимита возвращаемся на первую страницу
+        updateURL({ page: 1, limit: newLimit })
     }
 
     return {

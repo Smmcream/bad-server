@@ -117,7 +117,6 @@ const deleteRefreshTokenInUser = async (
     return user
 }
 
-// Реализация удаления токена из базы может отличаться
 // GET  /auth/logout
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -185,20 +184,27 @@ const getCurrentUserRoles = async (
     }
 }
 
-const updateCurrentUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+// ============================================================
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ (была уязвимость NoSQL-инъекция)
+// ============================================================
+const updateCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     const userId = res.locals.user._id
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+        // БЕЗОПАСНО: разрешаем обновлять только имя и email
+        const allowedUpdates = ['name', 'email'];
+        const updates: any = {};
+        
+        allowedUpdates.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updates[field] = req.body[field];
+            }
+        });
+
+        const updatedUser = await User.findByIdAndUpdate(userId, updates, {
             new: true,
+            runValidators: true // проверяем данные перед сохранением
         }).orFail(
-            () =>
-                new NotFoundError(
-                    'Пользователь по заданному id отсутствует в базе'
-                )
+            () => new NotFoundError('Пользователь по заданному id отсутствует в базе')
         )
         res.status(200).json(updatedUser)
     } catch (error) {

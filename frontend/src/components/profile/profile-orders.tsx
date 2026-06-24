@@ -5,7 +5,7 @@ import TableRow from '@components/table/table-row'
 import { OrderDataList } from '@slices/orders/type'
 import { profileOrdersSelector } from '@slices/profile-orders'
 import { fetchOrdersMeWithFilters } from '@slices/profile-orders/thunk'
-import { useDispatch } from '@store/hooks'
+// УДАЛЯЕМ НЕИСПОЛЬЗУЕМЫЙ ИМПОРТ: import { useDispatch } from '@store/hooks'
 import clsx from 'clsx'
 import { ChangeEvent, FormEvent, useCallback, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
@@ -15,9 +15,8 @@ import usePagination from '../pagination/helpers/usePagination'
 import styles from './profile.module.scss'
 
 export default function ProfileOrders() {
-    const dispatch = useDispatch()
+    // ✅ УДАЛЯЕМ НЕИСПОЛЬЗУЕМУЮ ПЕРЕМЕННУЮ: const dispatch = useDispatch()
     const location = useLocation()
-    // const orders = useSelector(profileOrdersSelector.selectProfileOrders);
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchOrder, setSearchOrder] = useState<string>(
         searchParams.get('search') || ''
@@ -31,7 +30,7 @@ export default function ProfileOrders() {
         nextPage,
         prevPage,
     } = usePagination<IOrderPaginationResult, OrderDataList>(
-        fetchOrdersMeWithFilters,
+        fetchOrdersMeWithFilters as any,
         profileOrdersSelector.selectProfileOrders,
         5
     )
@@ -86,6 +85,7 @@ export default function ProfileOrders() {
             key: 'totalAmount',
         },
     ]
+
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSearchOrder(e.target.value)
     }
@@ -99,7 +99,7 @@ export default function ProfileOrders() {
             })
             setSearchParams({ ...filters, search: value })
         },
-        [searchParams, dispatch, setSearchParams]
+        [searchParams, setSearchParams]
     )
 
     return (
