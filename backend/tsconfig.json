@@ -1,34 +1,18 @@
 {
     "compilerOptions": {
-        /* Базовые настройки */
         "target": "es2020",
-        "module": "NodeNext",
+        "module": "commonjs",
         "lib": ["es2020"],
-
-        /* Модули: синхронизируем с module */
-        "moduleResolution": "NodeNext",
+        "moduleResolution": "node10",
         "baseUrl": "./src",
         "rootDir": "./src",
-
-        /* Пути для поиска типов */
-        "typeRoots": ["./node_modules/@types", "./src/types"],
-
-        /* JavaScript Support */
         "allowJs": true,
         "checkJs": false,
-
-        /* Выходные файлы */
         "outDir": "./dist",
-
-        /* Совместимость */
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
-
-        /* Type Checking */
         "strict": true,
         "skipLibCheck": true,
-
-        /* Игнорируем предупреждения о депрекациях */
         "ignoreDeprecations": "6.0"
     },
     "include": ["src/**/*.ts"],
