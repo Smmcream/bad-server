@@ -10,7 +10,7 @@ import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
-const { PORT = 80 } = process.env  // ✅ ИЗМЕНЕНО НА 80
+const { PORT = 80 } = process.env
 const app = express()
 
 const limiter = rateLimit({
@@ -55,7 +55,8 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        const dbAddress = 'mongodb://root:example@localhost:27018/weblarek?authSource=admin';
+        // ✅ ИСПРАВЛЕНО: порт 27017 для тестов
+        const dbAddress = 'mongodb://localhost:27017/weblarek';
         await mongoose.connect(dbAddress);
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
