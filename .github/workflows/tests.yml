@@ -36,10 +36,10 @@ jobs:
         cd backend
         npm ci
 
-    - name: Start Backend
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        npm start &
+        PORT=80 npm start &
         sleep 5
 
     - name: Get testing lib
