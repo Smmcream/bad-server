@@ -4,13 +4,18 @@ import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 
+// ✅ НОРМАЛИЗАЦИЯ ЛИМИТА
+const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number = 10): number => {
+    const parsedLimit = Number(limit);
+    if (isNaN(parsedLimit) || parsedLimit < 1) return defaultLimit;
+    return Math.min(parsedLimit, maxLimit);
+};
+
 // ============================================================
 // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ БЕЗОПАСНОГО ПОИСКА
 // ============================================================
 const safeRegexSearch = (search: string) => {
-    // Ограничиваем длину строки (максимум 100 символов)
     const searchString = String(search).slice(0, 100);
-    // Экранируем специальные символы для RegExp
     const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(escapedSearch, 'i');
 }
@@ -24,9 +29,13 @@ export const getCustomers = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const {
             page = 1,
-            limit = 10,
             sortField = 'createdAt',
             sortOrder = 'desc',
             registrationDateFrom,
@@ -39,6 +48,9 @@ export const getCustomers = async (
             orderCountTo,
             search,
         } = req.query
+
+        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
+        const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IUser>> = {}
 
@@ -103,7 +115,6 @@ export const getCustomers = async (
         }
 
         if (search) {
-            // ✅ БЕЗОПАСНО: используем экранирование
             const searchRegex = safeRegexSearch(search as string);
             const orders = await Order.find(
                 {
@@ -128,8 +139,8 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (Number(page) - 1) * limit,
+            limit: limit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -149,7 +160,7 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / limit)
 
         res.status(200).json({
             customers: users,
@@ -157,7 +168,7 @@ export const getCustomers = async (
                 totalUsers,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize: limit,
             },
         })
     } catch (error) {
@@ -174,8 +185,12 @@ export const getCustomerById = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
-        // ✅ Проверяем, что ID передан
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));
         }
@@ -201,12 +216,16 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));
         }
 
-        // ✅ БЕЗОПАСНО: разрешаем обновлять только безопасные поля
         const allowedUpdates = ['name', 'email', 'phone', 'deliveryAddress'];
         const updates: any = {};
         allowedUpdates.forEach(field => {
@@ -245,6 +264,11 @@ export const deleteCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));

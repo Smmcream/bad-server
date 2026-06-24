@@ -13,6 +13,10 @@ import routes from './routes'
 const { PORT = 80 } = process.env
 const app = express()
 
+// ✅ ЛИМИТ НА РАЗМЕР BODY (тест 18)
+app.use(json({ limit: '1mb' }));
+app.use(urlencoded({ extended: true, limit: '1mb' }));
+
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -38,10 +42,11 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.use(urlencoded({ extended: true }))
-app.use(json())
+// ✅ УБИРАЕМ ДУБЛИРОВАНИЕ (уже есть выше)
+// app.use(urlencoded({ extended: true }))
+// app.use(json())
 
-// ✅ ИСПРАВЛЕНО: добавлена CSRF cookie
+// ✅ CSRF COOKIE
 app.get('/api/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
