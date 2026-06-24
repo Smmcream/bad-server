@@ -6,7 +6,6 @@ import express, { json, urlencoded } from 'express'
 import mongoose from 'mongoose'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
-import csrf from 'csrf-tokens'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
@@ -41,28 +40,6 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 
 app.use(urlencoded({ extended: true }))
 app.use(json())
-
-const csrfProtection = csrf({
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    },
-})
-
-app.use((req, res, next) => {
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-        if (req.path === '/api/csrf-token') {
-            return next()
-        }
-        return csrfProtection(req, res, next)
-    }
-    next()
-})
-
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-    res.json({ csrfToken: (req as any).csrfToken() })
-})
 
 app.use('/api/auth/login', authLimiter)
 

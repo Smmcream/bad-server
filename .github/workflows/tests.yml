@@ -31,30 +31,6 @@ jobs:
       with:
         node-version: 18.x
 
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        npm ci
-
-    - name: Build Backend
-      run: |
-        cd backend
-        npm run build
-
-    - name: Start Backend with Diagnostics
-      run: |
-        cd backend
-        PORT=80 npm start &
-        sleep 15
-        echo "=== ДИАГНОСТИКА ==="
-        echo "Проверка localhost:80"
-        curl -v http://localhost/api/auth/csrf-token || echo "❌ Бэкенд на 80 не отвечает"
-        echo "Проверка localhost:3000"
-        curl -v http://localhost:3000/api/auth/csrf-token || echo "❌ Бэкенд на 3000 не отвечает"
-        echo "Процессы Node.js:"
-        ps aux | grep node || echo "❌ Процессов node не найдено"
-        echo "=== КОНЕЦ ДИАГНОСТИКИ ==="
-
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
