@@ -50,7 +50,7 @@ jobs:
       run: |
         cd backend
         sudo PORT=80 node dist/app.js &
-        sleep 5
+        sleep 15
 
     - name: Check Backend
       run: |
