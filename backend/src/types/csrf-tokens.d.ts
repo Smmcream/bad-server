@@ -11,15 +11,10 @@ declare module 'csrf-tokens' {
 
     function csrf(options?: CsrfOptions): (req: Request, res: Response, next: NextFunction) => void;
 
-    namespace csrf {
-        function tokenize(secret: string, salt: string): string;
-        function verify(secret: string, token: string): boolean;
-    }
-
     export = csrf;
 }
 
-// Расширяем интерфейс Request для поддержки csrfToken
+// ✅ РАСШИРЯЕМ REQUEST ДЛЯ CSRF
 declare global {
     namespace Express {
         interface Request {
