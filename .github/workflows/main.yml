@@ -53,3 +53,9 @@ jobs:
       run: |
         cd frontend
         npm run lint
+
+    - name: Start Backend
+      run: |
+        cd backend
+        npm start & # Запускаем в фоне
+        sleep 5 # Ждём, пока сервер поднимется
