@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { FilterQuery, Error as MongooseError, Types } from 'mongoose'
+import { FilterQuery, Error as MongooseError, Types, sanitizeFilter } from 'mongoose'
 import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
 import Order, { IOrder } from '../models/order'
@@ -20,6 +20,11 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const {
             page = 1,
             sortField = 'createdAt',
@@ -32,7 +37,6 @@ export const getOrders = async (
             search,
         } = req.query
 
-        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IOrder>> = {}
@@ -97,7 +101,6 @@ export const getOrders = async (
         ]
 
         if (search) {
-            // ✅ БЕЗОПАСНО: экранируем спецсимволы
             const searchString = String(search).slice(0, 100);
             const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const searchRegex = new RegExp(escapedSearch, 'i');
@@ -168,7 +171,6 @@ export const getOrdersCurrentUser = async (
         const userId = res.locals.user._id
         const { search, page = 1 } = req.query
         
-        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
         const limit = normalizeLimit(req.query.limit, 5, 10);
 
         const options = {
@@ -198,7 +200,6 @@ export const getOrdersCurrentUser = async (
         let orders = user.orders as unknown as IOrder[]
 
         if (search) {
-            // ✅ БЕЗОПАСНО: экранируем спецсимволы
             const searchString = String(search).slice(0, 100);
             const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const searchRegex = new RegExp(escapedSearch, 'i');
@@ -244,6 +245,11 @@ export const getOrderByNumber = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const order = await Order.findOne({
             orderNumber: req.params.orderNumber,
         })
@@ -294,18 +300,19 @@ export const getOrderCurrentUserByNumber = async (
     }
 }
 
-// POST /product
+// POST /order
 export const createOrder = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
+        // ✅ ЗАЩИТА ОТ NoSQL-ИНЪЕКЦИЙ
+        const safeBody = sanitizeFilter(req.body);
         const basket: IProduct[] = []
         const products = await Product.find<IProduct>({})
         const userId = res.locals.user._id
-        const { address, payment, phone, total, email, items, comment } =
-            req.body
+        const { address, payment, phone, total, email, items, comment } = safeBody
 
         // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА
         if (phone && !/^\+?\d{10,15}$/.test(phone)) {
@@ -356,6 +363,11 @@ export const updateOrder = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { status } = req.body
         const updatedOrder = await Order.findOneAndUpdate(
             { orderNumber: req.params.orderNumber },
@@ -388,6 +400,11 @@ export const deleteOrder = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const deletedOrder = await Order.findByIdAndDelete(req.params.id)
             .orFail(
                 () =>

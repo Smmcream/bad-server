@@ -17,6 +17,7 @@ const app = express()
 app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
+// ✅ НАСТРОЙКА RATE LIMIT (тест 19)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -25,8 +26,10 @@ const limiter = rateLimit({
     legacyHeaders: false,
 })
 
+// ✅ ПРИМЕНЯЕМ RATE LIMIT КО ВСЕМ ЗАПРОСАМ /api
 app.use('/api', limiter)
 
+// ✅ СТРОГИЙ ЛИМИТ ДЛЯ АВТОРИЗАЦИИ
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 30,
@@ -35,6 +38,8 @@ const authLimiter = rateLimit({
 })
 
 app.use(cookieParser())
+
+// ✅ НАСТРОЙКА CORS (тест 17)
 app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true,
@@ -42,11 +47,7 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-// ✅ УБИРАЕМ ДУБЛИРОВАНИЕ (уже есть выше)
-// app.use(urlencoded({ extended: true }))
-// app.use(json())
-
-// ✅ CSRF COOKIE
+// ✅ CSRF COOKIE (тест 1-2)
 app.get('/api/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,

@@ -11,18 +11,14 @@ const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number 
     return Math.min(parsedLimit, maxLimit);
 };
 
-// ============================================================
-// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ БЕЗОПАСНОГО ПОИСКА
-// ============================================================
+// ✅ БЕЗОПАСНЫЙ ПОИСК
 const safeRegexSearch = (search: string) => {
     const searchString = String(search).slice(0, 100);
     const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(escapedSearch, 'i');
 }
 
-// ============================================================
 // GET /customers
-// ============================================================
 export const getCustomers = async (
     req: Request,
     res: Response,
@@ -49,7 +45,6 @@ export const getCustomers = async (
             search,
         } = req.query
 
-        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IUser>> = {}
@@ -176,16 +171,13 @@ export const getCustomers = async (
     }
 }
 
-// ============================================================
 // GET /customers/:id
-// ============================================================
 export const getCustomerById = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -207,16 +199,13 @@ export const getCustomerById = async (
     }
 }
 
-// ============================================================
 // PATCH /customers/:id
-// ============================================================
 export const updateCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -255,16 +244,13 @@ export const updateCustomer = async (
     }
 }
 
-// ============================================================
 // DELETE /customers/:id
-// ============================================================
 export const deleteCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
