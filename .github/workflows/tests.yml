@@ -46,10 +46,18 @@ jobs:
         npm ci
         npm run build
 
-    - name: Start Backend on Port 80 with sudo
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        sudo PORT=80 node dist/app.js
+        sudo PORT=80 node dist/app.js &
+        sleep 5
+
+    - name: Check Backend
+      run: |
+        echo "=== ПРОВЕРКА ==="
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://localhost:80/api/products || echo "❌ Товары не доступны"
+        ps aux | grep node
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
