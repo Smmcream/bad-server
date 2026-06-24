@@ -36,11 +36,17 @@ jobs:
         cd backend
         npm ci
 
-    - name: Start Backend on Port 80
+    - name: Build Backend
+      run: |
+        cd backend
+        npm run build
+
+    - name: Start Backend
       run: |
         cd backend
         PORT=80 npm start &
-        sleep 5
+        sleep 10
+        curl -v http://localhost/api/auth/csrf-token || true
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
