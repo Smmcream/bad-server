@@ -4,10 +4,9 @@ import { RootState } from '@store/store'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-// ✅ БЕЗОПАСНО: определяем тип для параметров запроса
 type FetchParams = Record<string, string | number | undefined>;
 
-interface PaginationResult<T, U> {
+interface PaginationResult<U> {
     data: U[]
     totalPages: number
     currentPage: number
@@ -18,12 +17,12 @@ interface PaginationResult<T, U> {
     setLimit: (limit: number) => void
 }
 
-// ✅ ИСПРАВЛЕНО: используем any для конфига, но типизируем параметры
+// Возвращаем T, но используем его
 const usePagination = <T, U>(
-    asyncAction: AsyncThunk<T, FetchParams, any>, // any допустим для конфига
+    asyncAction: AsyncThunk<T, FetchParams, any>,
     selector: (state: RootState) => U[],
     defaultLimit: number
-): PaginationResult<T, U> => {
+): PaginationResult<U> => {
     const dispatch = useDispatch()
     const data = useSelector(selector)
     const [searchParams, setSearchParams] = useSearchParams()
@@ -36,7 +35,6 @@ const usePagination = <T, U>(
 
     const limit = Number(searchParams.get('limit')) || defaultLimit
 
-    // ✅ ИСПРАВЛЕНО: заменяем any на FetchParams
     const fetchData = async (params: FetchParams) => {
         const response: any = await dispatch(asyncAction(params))
         setTotalPages(response.payload.pagination.totalPages)
@@ -53,10 +51,8 @@ const usePagination = <T, U>(
                 setPage(1)
             }
         })
-        // ✅ ИСПРАВЛЕНО: добавляем все зависимости
     }, [currentPage, limit, searchParams])
 
-    // ✅ ИСПРАВЛЕНО: заменяем any на FetchParams
     const updateURL = (newParams: FetchParams) => {
         const updatedParams = new URLSearchParams(searchParams)
         Object.entries(newParams).forEach(([key, value]) => {
