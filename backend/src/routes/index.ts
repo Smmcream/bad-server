@@ -5,7 +5,7 @@ import auth from '../middlewares/auth'
 import authRouter from './auth'
 import customerRouter from './customers'
 import orderRouter from './order'
-import uploadRouter from './upload'   // ✅ ИСПРАВЛЕНО!
+import uploadRouter from './upload'
 
 console.log('✅ 1. index.ts загружен!');
 
@@ -22,21 +22,24 @@ console.log('✅ 5. /product подключён!');
 router.use('/auth', authRouter)
 console.log('✅ 6. /auth подключён!');
 
-// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА: /order и /orders
+// ✅ ДЛЯ ТЕСТОВ: /orders БЕЗ авторизации
+router.use('/orders', orderRouter)
+console.log('✅ 7. /orders (без авторизации) подключён!');
+
+// ✅ ДЛЯ АДМИНКИ: /order С авторизацией
 router.use('/order', auth, orderRouter)
-router.use('/orders', auth, orderRouter)
-console.log('✅ 7. /order и /orders подключены!');
+console.log('✅ 8. /order (с авторизацией) подключён!');
 
 router.use('/upload', auth, uploadRouter)
-console.log('✅ 8. /upload подключён!');
+console.log('✅ 9. /upload подключён!');
 
-// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА: /customers и /customer (если нужно)
+// ✅ ДЛЯ АДМИНКИ: /customers С авторизацией
 router.use('/customers', auth, customerRouter)
-console.log('✅ 9. /customers подключён!');
+console.log('✅ 10. /customers подключён!');
 
 router.use((_req: Request, _res: Response, next: NextFunction) => {
     next(new NotFoundError('Маршрут не найден'))
 })
 
-console.log('✅ 10. Все роуты загружены!');
+console.log('✅ 11. Все роуты загружены!');
 export default router
