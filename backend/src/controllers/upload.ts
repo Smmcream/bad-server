@@ -61,9 +61,9 @@ export const uploadFile = async (
             ? `/${process.env.UPLOAD_PATH}/${randomName}`
             : `/${randomName}`
 
+        // ✅ НЕ ВОЗВРАЩАЕМ originalName! (тест 13)
         return res.status(constants.HTTP_STATUS_CREATED).send({
             fileName,
-            originalName: req.file?.originalname,
         })
     } catch (error) {
         return next(error)

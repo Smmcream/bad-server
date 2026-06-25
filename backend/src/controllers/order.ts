@@ -20,8 +20,6 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
-        console.log('📦 getOrders called'); // ✅ ДОБАВИЛИ ЛОГ
-
         const {
             page = 1,
             sortField = 'createdAt',
@@ -158,7 +156,6 @@ export const getOrders = async (
             },
         })
     } catch (error) {
-        console.error('❌ Error in getOrders:', error); // ✅ ДОБАВИЛИ ЛОГ ОШИБКИ
         next(error)
     }
 }
@@ -175,7 +172,7 @@ export const getOrdersAdmin = async (
             return res.status(401).json({ message: 'Не авторизован' });
         }
 
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ - ВОЗВРАЩАЕМ 403, А НЕ 404!
         if (res.locals.user.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -456,7 +453,7 @@ export const getOrderCurrentUserByNumber = async (
     }
 }
 
-// ✅ POST /order (тест 8)
+// ✅ POST /order (тест 8) - ИСПРАВЛЕНО!
 export const createOrder = async (
     req: Request,
     res: Response,
@@ -464,17 +461,25 @@ export const createOrder = async (
 ) => {
     try {
         const safeBody = sanitizeFilter(req.body);
-        const basket: IProduct[] = []
-        const products = await Product.find<IProduct>({})
-        const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } = safeBody
 
-        // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА (тест 8)
+        // ✅ 1. СНАЧАЛА ВАЛИДАЦИЯ ТЕЛЕФОНА (тест №8)
         if (!phone) {
             return next(new BadRequestError('Телефон обязателен'));
         }
-        if (!/^\+?\d{10,15}$/.test(phone)) {
+        // Очищаем телефон от пробелов и спецсимволов для валидации
+        const cleanPhone = phone.replace(/[\s\-()]/g, '');
+        if (!/^\+?\d{10,15}$/.test(cleanPhone)) {
             return next(new BadRequestError('Неверный формат телефона'));
+        }
+
+        // ✅ 2. ПОТОМ ПОИСК ПРОДУКТОВ
+        const basket: IProduct[] = []
+        const products = await Product.find<IProduct>({})
+        const userId = res.locals.user._id
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return next(new BadRequestError('Не указаны товары'));
         }
 
         items.forEach((id: Types.ObjectId) => {
@@ -487,16 +492,18 @@ export const createOrder = async (
             }
             return basket.push(product)
         })
+        
         const totalBasket = basket.reduce((a, c) => a + c.price, 0)
         if (totalBasket !== total) {
             return next(new BadRequestError('Неверная сумма заказа'))
         }
 
+        // ✅ 3. СОЗДАЕМ ЗАКАЗ С ОЧИЩЕННЫМ ТЕЛЕФОНОМ
         const newOrder = new Order({
             totalAmount: total,
             products: items,
             payment,
-            phone,
+            phone: cleanPhone, // ✅ Сохраняем очищенный телефон
             email,
             comment,
             customer: userId,

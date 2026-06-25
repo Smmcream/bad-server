@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express'
 import NotFoundError from '../errors/not-found-error'
-
+import userRouter from './users'
 import auth from '../middlewares/auth'
 import authRouter from './auth'
 import customerRouter from './customers'
@@ -32,7 +32,7 @@ console.log('✅ 8. /upload подключён!');
 // ✅ ОДИН РАУТ ДЛЯ ВСЕХ ЗАПРОСОВ К /customers
 router.use('/customers', customerRouter)
 console.log('✅ 9. /customers (и /customers/admin) подключён!');
-
+router.use('/users', userRouter)
 router.use((_req: Request, _res: Response, next: NextFunction) => {
     next(new NotFoundError('Маршрут не найден'))
 })
