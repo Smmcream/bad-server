@@ -23,9 +23,10 @@ app.use((req, res, next) => {
 app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
+// ✅ ГЛАВНЫЙ RATE-LIMIT - ДЛЯ ТЕСТОВ УМЕНЬШАЕМ!
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 5 : 1000, // ✅ ДЛЯ ТЕСТОВ 5
+    max: process.env.NODE_ENV === 'test' ? 5 : 1000, // ⬅️ ЭТО КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
