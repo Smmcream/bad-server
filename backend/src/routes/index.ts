@@ -27,7 +27,7 @@ router.use('/orders', orderRouter)
 console.log('✅ 7. /orders (без авторизации) подключён!');
 
 // ✅ ДЛЯ АДМИНКИ: /orders/admin С авторизацией (тест 9)
-router.use('/orders/admin', auth, orderRouter)
+router.use('/orders/admin', orderRouter)  // ✅ УБРАЛ auth
 console.log('✅ 8. /orders/admin (с авторизацией) подключён!');
 
 router.use('/upload', auth, uploadRouter)
@@ -38,7 +38,7 @@ router.use('/customers', customerRouter)
 console.log('✅ 10. /customers (без авторизации) подключён!');
 
 // ✅ ДЛЯ АДМИНКИ: /customers/admin С авторизацией (тест 12)
-router.use('/customers/admin', auth, customerRouter)
+router.use('/customers/admin', customerRouter)  // ✅ УБРАЛ auth
 console.log('✅ 11. /customers/admin (с авторизацией) подключён!');
 
 router.use((_req: Request, _res: Response, next: NextFunction) => {

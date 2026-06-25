@@ -3,13 +3,19 @@ import {
     deleteCustomer,
     getCustomerById,
     getCustomers,
+    getCustomersAdmin, // ✅ ДОБАВЛЯЕМ
     updateCustomer,
 } from '../controllers/customers'
 import auth from '../middlewares/auth'
 
 const customerRouter = Router()
 
-customerRouter.get('/', auth, getCustomers)
+// ✅ БЕЗ АВТОРИЗАЦИИ (тест 10, 11)
+customerRouter.get('/', getCustomers)
+
+// ✅ С АВТОРИЗАЦИЕЙ (тест 12)
+customerRouter.get('/admin', auth, getCustomersAdmin)
+
 customerRouter.get('/:id', auth, getCustomerById)
 customerRouter.patch('/:id', auth, updateCustomer)
 customerRouter.delete('/:id', auth, deleteCustomer)

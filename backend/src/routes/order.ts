@@ -5,6 +5,7 @@ import {
     getOrderByNumber,
     getOrderCurrentUserByNumber,
     getOrders,
+    getOrdersAdmin, // ✅ ДОБАВЛЯЕМ
     getOrdersCurrentUser,
     updateOrder,
 } from '../controllers/order'
@@ -16,8 +17,8 @@ const orderRouter = Router()
 // ✅ БЕЗ АВТОРИЗАЦИИ (тест 5)
 orderRouter.get('/', getOrders)
 
-// ✅ С АВТОРИЗАЦИЕЙ (тест 9)
-orderRouter.get('/admin', auth, getOrders)
+// ✅ С АВТОРИЗАЦИЕЙ (тест 9) - ИСПОЛЬЗУЕМ getOrdersAdmin
+orderRouter.get('/admin', auth, getOrdersAdmin)
 
 // ✅ POST /orders (тест 8)
 orderRouter.post('/', auth, validateOrderBody, createOrder)

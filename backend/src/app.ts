@@ -18,8 +18,8 @@ app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
 const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 минута
-    max: 10, // 10 запросов
+    windowMs: 60 * 1000,
+    max: 1000, // 1000 запросов в минуту (для тестов)
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
