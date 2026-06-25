@@ -37,11 +37,17 @@ jobs:
       run: |
         cd backend
         echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
         echo "NODE_ENV=test" >> .env
         cat .env
+
+    - name: Clear GitHub Actions cache
+      run: |
+        echo "🧹 Очистка кеша npm..."
+        npm cache clean --force
+        echo "✅ Кеш npm очищен"
 
     - name: Full clean
       run: |
@@ -58,12 +64,24 @@ jobs:
         npm run build
         echo "✅ Бэкенд собран"
 
+    - name: Wait for MongoDB
+      run: |
+        echo "⏳ Ожидание запуска MongoDB..."
+        for i in {1..30}; do
+          if nc -z localhost 27017; then
+            echo "✅ MongoDB запущена!"
+            break
+          fi
+          echo "⏳ Ждём... ($i/30)"
+          sleep 1
+        done
+
     - name: Import test data
       run: |
-        docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
-        docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
+        echo "📥 Импорт данных в MongoDB..."
+        mongoimport --db weblarek --collection users --drop --file .dump/weblarek.users.json --jsonArray
+        mongoimport --db weblarek --collection products --drop --file .dump/weblarek.products.json --jsonArray
+        echo "✅ Данные импортированы!"
 
     - name: Start Backend on Port 80
       run: |
