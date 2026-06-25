@@ -14,19 +14,15 @@ import { validateOrderBody } from '../middlewares/validations'
 
 const orderRouter = Router()
 
-// ✅ БЕЗ АВТОРИЗАЦИИ (тест 5)
-orderRouter.get('/', getOrders)
-
-// ✅ СПЕЦИФИЧНЫЕ РОУТЫ ДОЛЖНЫ ИДТИ ПЕРЕД /:orderNumber!
-orderRouter.get('/admin', auth, getOrdersAdmin)   // ⬅️ ВАЖНО!
+orderRouter.get('/admin', auth, getOrdersAdmin)
 orderRouter.post('/', auth, validateOrderBody, createOrder)
 orderRouter.post('/order', auth, validateOrderBody, createOrder)
-orderRouter.get('/all', auth, getOrdersCurrentUser)
-orderRouter.get('/all/me', auth, getOrdersCurrentUser)
+orderRouter.get('/all', auth, getOrdersCurrentUser)        // ← ЭТО ДОЛЖНО БЫТЬ ЗДЕСЬ!
+orderRouter.get('/all/me', auth, getOrdersCurrentUser)     // ← И ЭТО ЗДЕСЬ!
 orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 
-// ✅ ОБЩИЙ РОУТ С ПАРАМЕТРОМ - В САМОМ КОНЦЕ!
-orderRouter.get('/:orderNumber', auth, getOrderByNumber)
+// ✅ ОБЩИЙ РОУТ — В САМОМ КОНЦЕ!
+orderRouter.get('/:orderNumber', auth, getOrderByNumber)   // ← ЭТО ПОСЛЕДНЕЕ!
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, deleteOrder)
 
