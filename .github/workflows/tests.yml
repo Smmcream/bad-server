@@ -76,18 +76,13 @@ jobs:
           sleep 1
         done
 
-    - name: Install MongoDB Command Line Tools
-      run: |
-        echo "📦 Установка MongoDB Command Line Tools..."
-        sudo apt-get update
-        sudo apt-get install -y mongodb-mongosh mongodb-database-tools
-        echo "✅ MongoDB Command Line Tools установлены"
-
     - name: Import test data
       run: |
         echo "📥 Импорт данных в MongoDB..."
-        mongoimport --db weblarek --collection users --drop --file .dump/weblarek.users.json --jsonArray
-        mongoimport --db weblarek --collection products --drop --file .dump/weblarek.products.json --jsonArray
+        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
+          mongoimport --host localhost --port 27017 --db weblarek --collection users --drop --file /dump/weblarek.users.json --jsonArray
+        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
+          mongoimport --host localhost --port 27017 --db weblarek --collection products --drop --file /dump/weblarek.products.json --jsonArray
         echo "✅ Данные импортированы!"
 
     - name: Start Backend on Port 80
