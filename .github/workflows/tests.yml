@@ -40,7 +40,14 @@ jobs:
         echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
+        echo "NODE_ENV=test" >> .env
         cat .env
+
+    - name: Clean build cache
+      run: |
+        cd backend
+        rm -rf dist
+        rm -rf node_modules/.cache
 
     - name: Install dependencies
       run: |
@@ -52,13 +59,15 @@ jobs:
       run: |
         docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
         docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
+        docker cp .dump/weblarek.orders.json $(docker ps -q -f name=mongo):/tmp/orders.json
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection orders --drop --file /tmp/orders.json --jsonArray
 
     - name: Start Backend on Port 80
       run: |
         cd backend
-        sudo PORT=80 npm start &
+        sudo NODE_ENV=test PORT=80 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
         curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"

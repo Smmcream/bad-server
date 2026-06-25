@@ -1,0 +1,58 @@
+[
+  {
+    "orderNumber": 1001,
+    "status": "pending",
+    "totalAmount": 2200,
+    "payment": "card",
+    "phone": "+79991234567",
+    "email": "admin@mail.ru",
+    "deliveryAddress": "ул. Тестовая, д. 1",
+    "comment": "Тестовый заказ 1",
+    "customer": {
+      "$oid": "66ed71ce9c59262364955b3e"
+    },
+    "products": [
+      { "$oid": "66edb93e9b289d24854b30de" },
+      { "$oid": "66edb98a9b289d24854b30e8" }
+    ],
+    "createdAt": { "$date": "2026-06-25T12:00:00.000Z" },
+    "updatedAt": { "$date": "2026-06-25T12:00:00.000Z" }
+  },
+  {
+    "orderNumber": 1002,
+    "status": "paid",
+    "totalAmount": 3500,
+    "payment": "online",
+    "phone": "+79998765432",
+    "email": "user1@mail.ru",
+    "deliveryAddress": "ул. Тестовая, д. 2",
+    "comment": "Тестовый заказ 2",
+    "customer": {
+      "$oid": "66ed725a9c59262364955b5f"
+    },
+    "products": [
+      { "$oid": "66edb9c69b289d24854b30f2" },
+      { "$oid": "66edba0c9b289d24854b30fc" }
+    ],
+    "createdAt": { "$date": "2026-06-25T13:00:00.000Z" },
+    "updatedAt": { "$date": "2026-06-25T13:00:00.000Z" }
+  },
+  {
+    "orderNumber": 1003,
+    "status": "delivered",
+    "totalAmount": 1450,
+    "payment": "card",
+    "phone": "+79991234567",
+    "email": "admin@mail.ru",
+    "deliveryAddress": "ул. Тестовая, д. 3",
+    "comment": "Тестовый заказ 3",
+    "customer": {
+      "$oid": "66ed71ce9c59262364955b3e"
+    },
+    "products": [
+      { "$oid": "66edba2c9b289d24854b3106" }
+    ],
+    "createdAt": { "$date": "2026-06-25T14:00:00.000Z" },
+    "updatedAt": { "$date": "2026-06-25T14:30:00.000Z" }
+  }
+]
