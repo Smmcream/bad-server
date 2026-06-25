@@ -175,11 +175,13 @@ export const getCustomersAdmin = async (
     try {
         // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
         if (!res.locals.user) {
+            console.log('❌ Пользователь не авторизован');
             return res.status(401).json({ message: 'Не авторизован' });
         }
 
         // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user.role !== 'admin') {
+            console.log('❌ Доступ запрещен: пользователь не админ');
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -327,7 +329,7 @@ export const getCustomersAdmin = async (
     }
 }
 
-// ✅ GET /customers/:id - С ПРОВЕРКОЙ РОЛИ (тест 12)
+// ✅ GET /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const getCustomerById = async (
     req: Request,
     res: Response,
@@ -355,7 +357,7 @@ export const getCustomerById = async (
     }
 }
 
-// ✅ PATCH /customers/:id - С ПРОВЕРКОЙ РОЛИ (тест 12)
+// ✅ PATCH /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const updateCustomer = async (
     req: Request,
     res: Response,
@@ -400,7 +402,7 @@ export const updateCustomer = async (
     }
 }
 
-// ✅ DELETE /customers/:id - С ПРОВЕРКОЙ РОЛИ (тест 12)
+// ✅ DELETE /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const deleteCustomer = async (
     req: Request,
     res: Response,
