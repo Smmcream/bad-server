@@ -10,7 +10,7 @@ import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
-const { PORT = 80 } = process.env
+const { PORT = 3000 } = process.env
 const app = express()
 
 // ✅ ЛИМИТ НА РАЗМЕР BODY (тест 18)

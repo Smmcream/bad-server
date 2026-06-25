@@ -1,6 +1,6 @@
 import { Request, Express } from 'express'
 import multer, { FileFilterCallback } from 'multer'
-import { mkdirSync, existsSync } from 'fs'
+import { mkdirSync } from 'fs'
 import { join } from 'path'
 import crypto from 'crypto'
 
