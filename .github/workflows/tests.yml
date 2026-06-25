@@ -25,6 +25,8 @@ jobs:
     steps:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
+      with:
+        ref: fix-tests  # ✅ ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ ВЕТКУ fix-tests
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v4
@@ -60,10 +62,15 @@ jobs:
         sleep 15
         curl -v http://localhost:80/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
 
+    - name: Debug - show branch and commits
+      run: |
+        echo "=== ТЕКУЩАЯ ВЕТКА ==="
+        git branch
+        echo "=== ПОСЛЕДНИЕ КОММИТЫ ==="
+        git log --oneline -5
+
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
-      run: |
-        export API_URL=http://localhost:80
-        bash $DIR_TESTS/bin/run.sh
+      run: bash $DIR_TESTS/bin/run.sh
