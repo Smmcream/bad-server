@@ -20,10 +20,11 @@ app.use(urlencoded({ extended: true, limit: '1mb' }));
 // ✅ Rate Limit применяется ко всем запросам
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 5,  // ✅ МЕНЯЕМ ТОЛЬКО ЗДЕСЬ
+    max: 1000,  // ✅ ВОЗВРАЩАЕМ 1000
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true,  // ✅ НЕ СЧИТАЕМ УСПЕШНЫЕ ЗАПРОСЫ
 })
 app.use(limiter)
 
