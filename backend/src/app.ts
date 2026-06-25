@@ -14,6 +14,12 @@ import { DB_ADDRESS } from './config'
 const { PORT = 80 } = process.env
 const app = express()
 
+// ✅ ЛОГИРОВАНИЕ ВСЕХ ЗАПРОСОВ
+app.use((req, res, next) => {
+    console.log(`📨 ${req.method} ${req.url}`);
+    next();
+});
+
 app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
