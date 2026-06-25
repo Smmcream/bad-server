@@ -50,8 +50,8 @@ jobs:
       run: |
         docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
         docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
 
     - name: Start Backend
       run: |
