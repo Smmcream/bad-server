@@ -34,14 +34,5 @@ jobs:
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
-    - name: Debug tests
-      run: |
-        echo "=== Содержимое тестов ==="
-        ls -la $DIR_TESTS
-        echo "=== run.sh ==="
-        cat $DIR_TESTS/bin/run.sh
-        echo "=== global.setup.ts ==="
-        cat $DIR_TESTS/__tests__/global.setup.ts
-
     - name: Run tests
       run: bash $DIR_TESTS/bin/run.sh
