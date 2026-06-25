@@ -37,18 +37,19 @@ jobs:
       run: |
         cd backend
         echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env  # ⬅️ ИСПРАВЛЕНО!
+        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
         echo "NODE_ENV=test" >> .env
         cat .env
 
-    - name: Clean build cache
+    - name: Full clean
       run: |
         cd backend
         rm -rf dist
-        rm -rf node_modules/.cache
-        echo "✅ Кеш очищен"
+        rm -rf node_modules
+        rm -rf package-lock.json
+        echo "✅ Полная очистка"
 
     - name: Install dependencies
       run: |
@@ -61,10 +62,8 @@ jobs:
       run: |
         docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
         docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
-        docker cp .dump/weblarek.orders.json $(docker ps -q -f name=mongo):/tmp/orders.json
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection orders --drop --file /tmp/orders.json --jsonArray
 
     - name: Start Backend on Port 80
       run: |

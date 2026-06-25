@@ -179,8 +179,8 @@ export const getCustomersAdmin = async (
             return res.status(401).json({ message: 'Не авторизован' });
         }
 
-        // ✅ ПРОВЕРКА РОЛИ
-        if (res.locals.user.role !== 'admin') {
+        // ✅ ПРОВЕРКА РОЛИ - ИСПРАВЛЕНО НА roles!
+        if (!res.locals.user.roles?.includes('admin')) {
             console.log('❌ Доступ запрещен: пользователь не админ');
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -336,7 +336,8 @@ export const getCustomerById = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО НА roles!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -364,7 +365,8 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО НА roles!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -409,7 +411,8 @@ export const deleteCustomer = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО НА roles!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
