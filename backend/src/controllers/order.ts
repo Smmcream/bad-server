@@ -170,7 +170,13 @@ export const getOrdersAdmin = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
+        if (!res.locals.user) {
+            return res.status(401).json({ message: 'Не авторизован' });
+        }
+
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -463,7 +469,11 @@ export const createOrder = async (
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } = safeBody
 
-        if (phone && !/^\+?\d{10,15}$/.test(phone)) {
+        // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА (тест 8)
+        if (!phone) {
+            return next(new BadRequestError('Телефон обязателен'));
+        }
+        if (!/^\+?\d{10,15}$/.test(phone)) {
             return next(new BadRequestError('Неверный формат телефона'));
         }
 

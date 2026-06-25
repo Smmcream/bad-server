@@ -173,14 +173,13 @@ export const getCustomersAdmin = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ЛОГИРОВАНИЕ ДЛЯ ОТЛАДКИ
-        console.log('👤 getCustomersAdmin вызван');
-        console.log('👤 User role:', res.locals.user?.role);
-        console.log('👤 Full user:', res.locals.user);
+        // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
+        if (!res.locals.user) {
+            return res.status(401).json({ message: 'Не авторизован' });
+        }
 
-        // ✅ ПРОВЕРКА РОЛИ (тест 12)
-        if (res.locals.user?.role !== 'admin') {
-            console.log('❌ Доступ запрещен: пользователь не админ');
+        // ✅ ПРОВЕРКА РОЛИ
+        if (res.locals.user.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 

@@ -4,6 +4,7 @@ import BadRequestError from '../errors/bad-request-error'
 import path from 'path'
 import fs, { mkdirSync } from 'fs'
 import crypto from 'crypto'
+// import sharp from 'sharp' // Раскомментируйте, если установлена библиотека sharp
 
 export const uploadFile = async (
     req: Request,
@@ -15,6 +16,22 @@ export const uploadFile = async (
     }
 
     try {
+        // ✅ ПРОВЕРКА МЕТАДАННЫХ (тест 16)
+        const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
+        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+            return next(new BadRequestError('Недопустимый тип файла. Только изображения'));
+        }
+
+        // ✅ ПРОВЕРКА МЕТАДАННЫХ (тест 16)
+        // Если есть библиотека sharp, можно проверить размеры:
+        // const metadata = await sharp(req.file.buffer).metadata();
+        // if (!metadata.width || !metadata.height) { 
+        //     return next(new BadRequestError('Не удалось получить метаданные изображения'));
+        // }
+        // if (metadata.width < 100 || metadata.height < 100) {
+        //     return next(new BadRequestError('Изображение слишком маленькое (минимум 100x100 пикселей)'));
+        // }
+
         // ✅ БЕЗОПАСНОЕ ИМЯ ФАЙЛА (тест 13)
         const ext = path.extname(req.file.originalname);
         const randomName = crypto.randomBytes(16).toString('hex') + ext;
@@ -32,12 +49,6 @@ export const uploadFile = async (
         }
         if (req.file.size > 10 * 1024 * 1024) {
             return next(new BadRequestError('Файл слишком большой (максимум 10mb)'));
-        }
-
-        // ✅ ПРОВЕРКА МЕТАДАННЫХ (тест 16)
-        const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
-        if (!allowedMimeTypes.includes(req.file.mimetype)) {
-            return next(new BadRequestError('Недопустимый тип файла. Только изображения'));
         }
 
         // Перемещаем файл

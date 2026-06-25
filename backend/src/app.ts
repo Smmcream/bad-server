@@ -56,9 +56,8 @@ app.use('/api/auth/login', authLimiter)
 
 app.options('*', cors())
 
-// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА
+// ✅ ТОЛЬКО /api
 app.use('/api', routes)
-app.use('/', routes)  // ДЛЯ ТЕСТОВ
 
 app.use(errors())
 app.use(errorHandler)
