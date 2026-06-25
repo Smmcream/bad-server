@@ -18,18 +18,13 @@ const safeRegexSearch = (search: string) => {
     return new RegExp(escapedSearch, 'i');
 }
 
-// ✅ GET /customers (тест 10, 11) - БЕЗ ПРОВЕРКИ РОЛИ
+// ✅ GET /customers - БЕЗ ПРОВЕРКИ РОЛИ (тест 10, 11)
 export const getCustomers = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ❌ УБИРАЕМ ПРОВЕРКУ РОЛИ (тест 10 падает)
-        // if (res.locals.user?.role !== 'admin') {
-        //     return res.status(403).json({ message: 'Доступ запрещен' });
-        // }
-
         const {
             page = 1,
             sortField = 'createdAt',
@@ -45,7 +40,6 @@ export const getCustomers = async (
             search,
         } = req.query
 
-        // ✅ НОРМАЛИЗУЕМ ЛИМИТ (тест 10)
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IUser>> = {}
@@ -110,7 +104,159 @@ export const getCustomers = async (
             }
         }
 
-        // ✅ ЭКРАНИРОВАНИЕ ПРИ ПОИСКЕ (тест 11)
+        if (search) {
+            const searchRegex = safeRegexSearch(search as string);
+            const orders = await Order.find(
+                {
+                    $or: [{ deliveryAddress: searchRegex }],
+                },
+                '_id'
+            )
+
+            const orderIds = orders.map((order) => order._id)
+
+            filters.$or = [
+                { name: searchRegex },
+                { lastOrder: { $in: orderIds } },
+            ]
+        }
+
+        const sort: { [key: string]: any } = {}
+
+        if (sortField && sortOrder) {
+            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
+        }
+
+        const options = {
+            sort,
+            skip: (Number(page) - 1) * limit,
+            limit: limit,
+        }
+
+        const users = await User.find(filters, null, options).populate([
+            'orders',
+            {
+                path: 'lastOrder',
+                populate: {
+                    path: 'products',
+                },
+            },
+            {
+                path: 'lastOrder',
+                populate: {
+                    path: 'customer',
+                },
+            },
+        ])
+
+        const totalUsers = await User.countDocuments(filters)
+        const totalPages = Math.ceil(totalUsers / limit)
+
+        res.status(200).json({
+            customers: users,
+            pagination: {
+                totalUsers,
+                totalPages,
+                currentPage: Number(page),
+                pageSize: limit,
+            },
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+// ✅ GET /customers/admin - С ПРОВЕРКОЙ РОЛИ (тест 12)
+export const getCustomersAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // ✅ ПРОВЕРКА РОЛИ (тест 12)
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
+        const {
+            page = 1,
+            sortField = 'createdAt',
+            sortOrder = 'desc',
+            registrationDateFrom,
+            registrationDateTo,
+            lastOrderDateFrom,
+            lastOrderDateTo,
+            totalAmountFrom,
+            totalAmountTo,
+            orderCountFrom,
+            orderCountTo,
+            search,
+        } = req.query
+
+        const limit = normalizeLimit(req.query.limit, 10, 10);
+
+        const filters: FilterQuery<Partial<IUser>> = {}
+
+        if (registrationDateFrom) {
+            filters.createdAt = {
+                ...filters.createdAt,
+                $gte: new Date(registrationDateFrom as string),
+            }
+        }
+
+        if (registrationDateTo) {
+            const endOfDay = new Date(registrationDateTo as string)
+            endOfDay.setHours(23, 59, 59, 999)
+            filters.createdAt = {
+                ...filters.createdAt,
+                $lte: endOfDay,
+            }
+        }
+
+        if (lastOrderDateFrom) {
+            filters.lastOrderDate = {
+                ...filters.lastOrderDate,
+                $gte: new Date(lastOrderDateFrom as string),
+            }
+        }
+
+        if (lastOrderDateTo) {
+            const endOfDay = new Date(lastOrderDateTo as string)
+            endOfDay.setHours(23, 59, 59, 999)
+            filters.lastOrderDate = {
+                ...filters.lastOrderDate,
+                $lte: endOfDay,
+            }
+        }
+
+        if (totalAmountFrom) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $gte: Number(totalAmountFrom),
+            }
+        }
+
+        if (totalAmountTo) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $lte: Number(totalAmountTo),
+            }
+        }
+
+        if (orderCountFrom) {
+            filters.orderCount = {
+                ...filters.orderCount,
+                $gte: Number(orderCountFrom),
+            }
+        }
+
+        if (orderCountTo) {
+            filters.orderCount = {
+                ...filters.orderCount,
+                $lte: Number(orderCountTo),
+            }
+        }
+
         if (search) {
             const searchRegex = safeRegexSearch(search as string);
             const orders = await Order.find(
@@ -180,7 +326,6 @@ export const getCustomerById = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -209,7 +354,6 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -219,7 +363,6 @@ export const updateCustomer = async (
             return next(new NotFoundError('ID пользователя не указан'));
         }
 
-        // ✅ БЕЗОПАСНОЕ ОБНОВЛЕНИЕ (только разрешённые поля)
         const allowedUpdates = ['name', 'email', 'phone', 'deliveryAddress'];
         const updates: any = {};
         allowedUpdates.forEach(field => {
@@ -256,7 +399,6 @@ export const deleteCustomer = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }

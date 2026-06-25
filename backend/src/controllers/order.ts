@@ -13,17 +13,164 @@ const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number 
     return Math.min(parsedLimit, maxLimit);
 };
 
-// ✅ GET /orders (тест 5) - БЕЗ ПРОВЕРКИ РОЛИ
+// ✅ GET /orders - БЕЗ ПРОВЕРКИ РОЛИ (тест 5)
 export const getOrders = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ❌ УБИРАЕМ ПРОВЕРКУ РОЛИ (тест 5 падает)
-        // if (res.locals.user?.role !== 'admin') {
-        //     return res.status(403).json({ message: 'Доступ запрещен' });
-        // }
+        const {
+            page = 1,
+            sortField = 'createdAt',
+            sortOrder = 'desc',
+            status,
+            totalAmountFrom,
+            totalAmountTo,
+            orderDateFrom,
+            orderDateTo,
+            search,
+        } = req.query
+
+        // ✅ ЖЕСТКАЯ НОРМАЛИЗАЦИЯ ЛИМИТА
+        let limit = Number(req.query.limit) || 10;
+        if (limit > 10) limit = 10;
+        if (limit < 1) limit = 10;
+
+        const filters: FilterQuery<Partial<IOrder>> = {}
+
+        if (status) {
+            if (typeof status === 'object') {
+                Object.assign(filters, status)
+            }
+            if (typeof status === 'string') {
+                filters.status = status
+            }
+        }
+
+        if (totalAmountFrom) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $gte: Number(totalAmountFrom),
+            }
+        }
+
+        if (totalAmountTo) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $lte: Number(totalAmountTo),
+            }
+        }
+
+        if (orderDateFrom) {
+            filters.createdAt = {
+                ...filters.createdAt,
+                $gte: new Date(orderDateFrom as string),
+            }
+        }
+
+        if (orderDateTo) {
+            filters.createdAt = {
+                ...filters.createdAt,
+                $lte: new Date(orderDateTo as string),
+            }
+        }
+
+        const aggregatePipeline: any[] = [
+            { $match: filters },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'products',
+                    foreignField: '_id',
+                    as: 'products',
+                },
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'customer',
+                    foreignField: '_id',
+                    as: 'customer',
+                },
+            },
+            { $unwind: '$customer' },
+            { $unwind: '$products' },
+        ]
+
+        if (search) {
+            const searchString = String(search).slice(0, 100);
+            const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const searchRegex = new RegExp(escapedSearch, 'i');
+            const searchNumber = Number(searchString);
+
+            const searchConditions: any[] = [{ 'products.title': searchRegex }];
+
+            if (!Number.isNaN(searchNumber)) {
+                searchConditions.push({ orderNumber: searchNumber });
+            }
+
+            aggregatePipeline.push({
+                $match: {
+                    $or: searchConditions,
+                },
+            })
+
+            filters.$or = searchConditions
+        }
+
+        const sort: { [key: string]: any } = {}
+
+        if (sortField && sortOrder) {
+            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
+        }
+
+        aggregatePipeline.push(
+            { $sort: sort },
+            { $skip: (Number(page) - 1) * limit },
+            { $limit: limit },
+            {
+                $group: {
+                    _id: '$_id',
+                    orderNumber: { $first: '$orderNumber' },
+                    status: { $first: '$status' },
+                    totalAmount: { $first: '$totalAmount' },
+                    products: { $push: '$products' },
+                    customer: { $first: '$customer' },
+                    createdAt: { $first: '$createdAt' },
+                },
+            }
+        )
+
+        const orders = await Order.aggregate(aggregatePipeline)
+        const totalOrders = await Order.countDocuments(filters)
+        const totalPages = Math.ceil(totalOrders / limit)
+
+        res.status(200).json({
+            orders,
+            pagination: {
+                totalOrders,
+                totalPages,
+                currentPage: Number(page),
+                pageSize: limit,
+            },
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+// ✅ GET /orders/admin - С ПРОВЕРКОЙ РОЛИ (тест 9)
+export const getOrdersAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // ✅ ПРОВЕРКА РОЛИ (тест 9)
+        if (res.locals.user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
 
         const {
             page = 1,
@@ -37,6 +184,7 @@ export const getOrders = async (
             search,
         } = req.query
 
+        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IOrder>> = {}
@@ -239,14 +387,13 @@ export const getOrdersCurrentUser = async (
     }
 }
 
-// ✅ GET /orders/:orderNumber - С ПРОВЕРКОЙ РОЛИ (тест 9)
+// ✅ GET /orders/:orderNumber - С ПРОВЕРКОЙ РОЛИ
 export const getOrderByNumber = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -309,19 +456,16 @@ export const createOrder = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ЗАЩИТА ОТ NoSQL-ИНЪЕКЦИЙ
         const safeBody = sanitizeFilter(req.body);
         const basket: IProduct[] = []
         const products = await Product.find<IProduct>({})
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } = safeBody
 
-        // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА (тест 8)
         if (phone && !/^\+?\d{10,15}$/.test(phone)) {
             return next(new BadRequestError('Неверный формат телефона'));
         }
 
-        // ✅ ПРОВЕРКА СУММЫ
         items.forEach((id: Types.ObjectId) => {
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
@@ -359,14 +503,13 @@ export const createOrder = async (
     }
 }
 
-// ✅ PATCH /order/:orderNumber - С ПРОВЕРКОЙ РОЛИ (тест 9)
+// ✅ PATCH /order/:orderNumber - С ПРОВЕРКОЙ РОЛИ
 export const updateOrder = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -396,14 +539,13 @@ export const updateOrder = async (
     }
 }
 
-// ✅ DELETE /order/:id - С ПРОВЕРКОЙ РОЛИ (тест 9)
+// ✅ DELETE /order/:id - С ПРОВЕРКОЙ РОЛИ
 export const deleteOrder = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }

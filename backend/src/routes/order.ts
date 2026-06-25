@@ -19,7 +19,12 @@ orderRouter.get('/', getOrders)
 // ✅ С АВТОРИЗАЦИЕЙ (тест 9)
 orderRouter.get('/admin', auth, getOrders)
 
+// ✅ POST /orders (тест 8)
 orderRouter.post('/', auth, validateOrderBody, createOrder)
+
+// ✅ POST /order (для единообразия)
+orderRouter.post('/order', auth, validateOrderBody, createOrder)
+
 orderRouter.get('/all', auth, getOrdersCurrentUser)
 orderRouter.get('/all/me', auth, getOrdersCurrentUser)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
