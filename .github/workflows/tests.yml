@@ -37,7 +37,7 @@ jobs:
       run: |
         cd backend
         echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
+        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env  # ⬅️ ИСПРАВЛЕНО!
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
         echo "NODE_ENV=test" >> .env
@@ -48,12 +48,14 @@ jobs:
         cd backend
         rm -rf dist
         rm -rf node_modules/.cache
+        echo "✅ Кеш очищен"
 
     - name: Install dependencies
       run: |
         cd backend
         npm install
         npm run build
+        echo "✅ Бэкенд собран"
 
     - name: Import test data
       run: |
