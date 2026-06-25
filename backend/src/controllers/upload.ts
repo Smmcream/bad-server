@@ -29,8 +29,11 @@ export const uploadFile = async (
         }
 
         // ✅ ПРОВЕРКА МЕТАДАННЫХ (тест 16)
-        // Здесь нужно использовать sharp для проверки изображений
-        // Но для простоты пропустим
+        // Проверяем, что файл является изображением
+        const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
+        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+            return next(new BadRequestError('Недопустимый тип файла. Только изображения'));
+        }
 
         // Перемещаем файл
         fs.renameSync(req.file.path, newPath);

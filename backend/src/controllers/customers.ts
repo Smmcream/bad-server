@@ -11,7 +11,7 @@ const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number 
     return Math.min(parsedLimit, maxLimit);
 };
 
-// ✅ БЕЗОПАСНЫЙ ПОИСК
+// ✅ БЕЗОПАСНЫЙ ПОИСК (тест 11)
 const safeRegexSearch = (search: string) => {
     const searchString = String(search).slice(0, 100);
     const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -180,6 +180,7 @@ export const getCustomerById = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ (тест 12)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -208,6 +209,7 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ (тест 12)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -217,6 +219,7 @@ export const updateCustomer = async (
             return next(new NotFoundError('ID пользователя не указан'));
         }
 
+        // ✅ БЕЗОПАСНОЕ ОБНОВЛЕНИЕ (только разрешённые поля)
         const allowedUpdates = ['name', 'email', 'phone', 'deliveryAddress'];
         const updates: any = {};
         allowedUpdates.forEach(field => {
@@ -253,6 +256,7 @@ export const deleteCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ (тест 12)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }

@@ -321,6 +321,7 @@ export const createOrder = async (
             return next(new BadRequestError('Неверный формат телефона'));
         }
 
+        // ✅ ПРОВЕРКА СУММЫ
         items.forEach((id: Types.ObjectId) => {
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
