@@ -26,7 +26,7 @@ jobs:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
       with:
-        ref: fix-tests  # ✅ ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ ВЕТКУ fix-tests
+        ref: fix-tests
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v4
@@ -60,14 +60,22 @@ jobs:
         cd backend
         sudo PORT=80 npm start &
         sleep 15
-        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
+        echo "=== ПРОВЕРКА БЭКЕНДА ==="
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://localhost:80/api/orders || echo "❌ Заказы не доступны"
 
-    - name: Debug - show branch and commits
+    - name: Debug - test registration
       run: |
-        echo "=== ТЕКУЩАЯ ВЕТКА ==="
-        git branch
-        echo "=== ПОСЛЕДНИЕ КОММИТЫ ==="
-        git log --oneline -5
+        echo "=== РЕГИСТРАЦИЯ ==="
+        curl -v -X POST http://localhost:80/api/auth/register \
+          -H "Content-Type: application/json" \
+          -d '{"email":"test@test.com","password":"password","name":"Test"}' \
+          || echo "❌ Регистрация не работает"
+
+    - name: Debug - show backend logs
+      run: |
+        echo "=== ПРОЦЕССЫ NODE ==="
+        ps aux | grep node
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
