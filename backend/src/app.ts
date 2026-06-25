@@ -9,6 +9,7 @@ import rateLimit from 'express-rate-limit'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
+import { DB_ADDRESS } from './config'  // ✅ ДОБАВЛЕНО
 
 const { PORT = 80 } = process.env
 const app = express()
@@ -60,8 +61,7 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        const dbAddress = 'mongodb://localhost:27017/weblarek';
-        await mongoose.connect(dbAddress);
+        await mongoose.connect(DB_ADDRESS);  // ✅ ИСПОЛЬЗУЕМ DB_ADDRESS
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
