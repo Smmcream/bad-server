@@ -19,9 +19,7 @@ const storage = multer.diskStorage({
                 ? `../public/${process.env.UPLOAD_PATH_TEMP}`
                 : '../public'
         )
-
         mkdirSync(destinationPath, { recursive: true })
-
         cb(null, destinationPath)
     },
 
@@ -30,7 +28,6 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        // ✅ БЕЗОПАСНО: генерируем уникальное имя файла
         const ext = file.originalname.split('.').pop() || 'jpg';
         const randomName = crypto.randomBytes(16).toString('hex');
         cb(null, `${randomName}.${ext}`);
@@ -57,7 +54,6 @@ const fileFilter = (
     return cb(null, true)
 }
 
-// ✅ НАСТРОЙКИ MULTER: лимиты и фильтры
 export default multer({
     storage,
     fileFilter,

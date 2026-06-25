@@ -18,14 +18,14 @@ const safeRegexSearch = (search: string) => {
     return new RegExp(escapedSearch, 'i');
 }
 
-// GET /customers
+// ✅ GET /customers (тест 10, 11, 12)
 export const getCustomers = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ (тест 12)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -45,6 +45,7 @@ export const getCustomers = async (
             search,
         } = req.query
 
+        // ✅ НОРМАЛИЗУЕМ ЛИМИТ (тест 10)
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IUser>> = {}
@@ -109,6 +110,7 @@ export const getCustomers = async (
             }
         }
 
+        // ✅ ЭКРАНИРОВАНИЕ ПРИ ПОИСКЕ (тест 11)
         if (search) {
             const searchRegex = safeRegexSearch(search as string);
             const orders = await Order.find(
@@ -171,7 +173,7 @@ export const getCustomers = async (
     }
 }
 
-// GET /customers/:id
+// ✅ GET /customers/:id
 export const getCustomerById = async (
     req: Request,
     res: Response,
@@ -199,7 +201,7 @@ export const getCustomerById = async (
     }
 }
 
-// PATCH /customers/:id
+// ✅ PATCH /customers/:id
 export const updateCustomer = async (
     req: Request,
     res: Response,
@@ -244,7 +246,7 @@ export const updateCustomer = async (
     }
 }
 
-// DELETE /customers/:id
+// ✅ DELETE /customers/:id
 export const deleteCustomer = async (
     req: Request,
     res: Response,

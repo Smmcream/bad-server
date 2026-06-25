@@ -13,14 +13,14 @@ const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number 
     return Math.min(parsedLimit, maxLimit);
 };
 
-// GET /orders
+// ✅ GET /orders (тест 5, 9)
 export const getOrders = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -162,6 +162,7 @@ export const getOrders = async (
     }
 }
 
+// ✅ GET /orders/me (для текущего пользователя)
 export const getOrdersCurrentUser = async (
     req: Request,
     res: Response,
@@ -238,14 +239,14 @@ export const getOrdersCurrentUser = async (
     }
 }
 
-// Get order by ID
+// ✅ GET /orders/:orderNumber (тест 9)
 export const getOrderByNumber = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -269,6 +270,7 @@ export const getOrderByNumber = async (
     }
 }
 
+// ✅ GET /orders/me/:orderNumber (для текущего пользователя)
 export const getOrderCurrentUserByNumber = async (
     req: Request,
     res: Response,
@@ -300,7 +302,7 @@ export const getOrderCurrentUserByNumber = async (
     }
 }
 
-// POST /order
+// ✅ POST /order (тест 8)
 export const createOrder = async (
     req: Request,
     res: Response,
@@ -314,7 +316,7 @@ export const createOrder = async (
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } = safeBody
 
-        // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА
+        // ✅ ВАЛИДАЦИЯ ТЕЛЕФОНА (тест 8)
         if (phone && !/^\+?\d{10,15}$/.test(phone)) {
             return next(new BadRequestError('Неверный формат телефона'));
         }
@@ -356,14 +358,14 @@ export const createOrder = async (
     }
 }
 
-// Update an order
+// ✅ PATCH /order/:orderNumber
 export const updateOrder = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -393,14 +395,14 @@ export const updateOrder = async (
     }
 }
 
-// Delete an order
+// ✅ DELETE /order/:id
 export const deleteOrder = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
+        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
