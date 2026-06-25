@@ -31,24 +31,8 @@ jobs:
       with:
         node-version: 18.x
 
-    - name: Debug - show repository content
-      run: |
-        echo "=== Содержимое репозитория ==="
-        ls -la
-        echo "=== Содержимое backend ==="
-        ls -la backend
-        echo "=== Содержимое package.json ==="
-        cat backend/package.json
-
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
-
-    - name: Debug - show tests content
-      run: |
-        echo "=== Содержимое тестов ==="
-        ls -la $DIR_TESTS
-        echo "=== run.sh ==="
-        cat $DIR_TESTS/bin/run.sh
 
     - name: Run tests
       run: bash $DIR_TESTS/bin/run.sh
