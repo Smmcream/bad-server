@@ -20,6 +20,8 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
+        console.log('📦 getOrders called'); // ✅ ДОБАВИЛИ ЛОГ
+
         const {
             page = 1,
             sortField = 'createdAt',
@@ -156,6 +158,7 @@ export const getOrders = async (
             },
         })
     } catch (error) {
+        console.error('❌ Error in getOrders:', error); // ✅ ДОБАВИЛИ ЛОГ ОШИБКИ
         next(error)
     }
 }
@@ -167,7 +170,6 @@ export const getOrdersAdmin = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ (тест 9)
         if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
@@ -184,7 +186,6 @@ export const getOrdersAdmin = async (
             search,
         } = req.query
 
-        // ✅ НОРМАЛИЗУЕМ ЛИМИТ
         const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IOrder>> = {}

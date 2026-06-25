@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
-import { DB_ADDRESS } from './config'  // ✅ ДОБАВЛЕНО
+import { DB_ADDRESS } from './config'
 
 const { PORT = 80 } = process.env
 const app = express()
@@ -17,14 +17,15 @@ const app = express()
 app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
+// ✅ ИЗМЕНЕНО: limiter применяется ко ВСЕМ запросам
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 1000, // 1000 запросов в минуту (для тестов)
+    max: 1000,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
 })
-app.use('/api', limiter)
+app.use(limiter)  // ✅ УБРАЛ /api
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -54,14 +55,14 @@ app.get('/api/auth/csrf-token', (req, res) => {
 app.use('/api/auth/login', authLimiter)
 
 app.options('*', cors())
-app.use('/api', routes)
+app.use('/', routes)
 
 app.use(errors())
 app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        await mongoose.connect(DB_ADDRESS);  // ✅ ИСПОЛЬЗУЕМ DB_ADDRESS
+        await mongoose.connect(DB_ADDRESS);
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)

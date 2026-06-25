@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
 import BadRequestError from '../errors/bad-request-error'
 import path from 'path'
-import fs from 'fs'
+import fs, { mkdirSync } from 'fs'
 import crypto from 'crypto'
 
 export const uploadFile = async (
@@ -20,6 +20,12 @@ export const uploadFile = async (
         const randomName = crypto.randomBytes(16).toString('hex') + ext;
         const newPath = path.join(__dirname, '../public/uploads', randomName);
 
+        // ✅ СОЗДАЁМ ПАПКУ, ЕСЛИ ЕЁ НЕТ
+        const dir = path.dirname(newPath);
+        if (!fs.existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+        }
+
         // ✅ ПРОВЕРКА РАЗМЕРА (тесты 14, 15)
         if (req.file.size < 2 * 1024) {
             return next(new BadRequestError('Файл слишком маленький (минимум 2kb)'));
@@ -29,7 +35,6 @@ export const uploadFile = async (
         }
 
         // ✅ ПРОВЕРКА МЕТАДАННЫХ (тест 16)
-        // Проверяем, что файл является изображением
         const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
         if (!allowedMimeTypes.includes(req.file.mimetype)) {
             return next(new BadRequestError('Недопустимый тип файла. Только изображения'));
