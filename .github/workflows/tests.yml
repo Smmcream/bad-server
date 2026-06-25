@@ -34,7 +34,7 @@ jobs:
     - name: Create .env
       run: |
         cd backend
-        echo "PORT=3000" > .env
+        echo "PORT=80" > .env
         echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
@@ -53,15 +53,17 @@ jobs:
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
 
-    - name: Start Backend
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        npm start &
-        sleep 10
-        curl http://localhost:3000/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
+        sudo PORT=80 npm start &
+        sleep 15
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ Бэкенд не запустился"
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
-      run: bash $DIR_TESTS/bin/run.sh
+      run: |
+        export API_URL=http://localhost:80
+        bash $DIR_TESTS/bin/run.sh
