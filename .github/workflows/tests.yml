@@ -31,11 +31,6 @@ jobs:
       with:
         node-version: 18.x
 
-    - name: Import test data
-      run: |
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /github/workspace/.dump/weblarek.users.json
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /github/workspace/.dump/weblarek.products.json
-
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
