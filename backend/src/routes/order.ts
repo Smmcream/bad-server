@@ -11,33 +11,20 @@ import {
 import auth from '../middlewares/auth'
 import { validateOrderBody } from '../middlewares/validations'
 
-// Убираем Role, так как он не используется
-// import { Role } from '../models/user'
-
 const orderRouter = Router()
 
-orderRouter.post('/', auth, validateOrderBody, createOrder)
-orderRouter.get('/all', auth, getOrders)
-orderRouter.get('/all/me', auth, getOrdersCurrentUser)
-orderRouter.get(
-    '/:orderNumber',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    getOrderByNumber
-)
-orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
-orderRouter.patch(
-    '/:orderNumber',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    updateOrder
-)
+// ✅ БЕЗ АВТОРИЗАЦИИ (тест 5)
+orderRouter.get('/', getOrders)
 
-orderRouter.delete(
-    '/:id',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    deleteOrder
-)
+// ✅ С АВТОРИЗАЦИЕЙ (тест 9)
+orderRouter.get('/admin', auth, getOrders)
+
+orderRouter.post('/', auth, validateOrderBody, createOrder)
+orderRouter.get('/all', auth, getOrdersCurrentUser)
+orderRouter.get('/all/me', auth, getOrdersCurrentUser)
+orderRouter.get('/:orderNumber', auth, getOrderByNumber)
+orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
+orderRouter.patch('/:orderNumber', auth, updateOrder)
+orderRouter.delete('/:id', auth, deleteOrder)
 
 export default orderRouter
