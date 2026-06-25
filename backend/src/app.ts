@@ -17,14 +17,13 @@ const app = express()
 app.use(json({ limit: '1mb' }));
 app.use(urlencoded({ extended: true, limit: '1mb' }));
 
-// ✅ Rate Limit применяется ко всем запросам
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 1000,  // ✅ ВОЗВРАЩАЕМ 1000
+    max: 1000,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: true,  // ✅ НЕ СЧИТАЕМ УСПЕШНЫЕ ЗАПРОСЫ
+    skipSuccessfulRequests: true,
 })
 app.use(limiter)
 
@@ -44,7 +43,6 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-// ✅ CSRF токен (оставляем с /api)
 app.get('/api/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
@@ -54,13 +52,13 @@ app.get('/api/auth/csrf-token', (req, res) => {
     res.json({ csrfToken: 'test-csrf-token' });
 })
 
-// ✅ Логин (оставляем с /api)
 app.use('/api/auth/login', authLimiter)
 
 app.options('*', cors())
 
-// ✅ ВОЗВРАЩАЕМ /api для всех роутов
+// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА
 app.use('/api', routes)
+app.use('/', routes)  // ДЛЯ ТЕСТОВ
 
 app.use(errors())
 app.use(errorHandler)
