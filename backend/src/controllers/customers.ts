@@ -173,10 +173,18 @@ export const getCustomersAdmin = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ЛОГИРОВАНИЕ ДЛЯ ОТЛАДКИ
+        console.log('👤 getCustomersAdmin вызван');
+        console.log('👤 User role:', res.locals.user?.role);
+        console.log('👤 Full user:', res.locals.user);
+
         // ✅ ПРОВЕРКА РОЛИ (тест 12)
         if (res.locals.user?.role !== 'admin') {
+            console.log('❌ Доступ запрещен: пользователь не админ');
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
+
+        console.log('✅ Доступ разрешен: пользователь админ');
 
         const {
             page = 1,
@@ -315,6 +323,7 @@ export const getCustomersAdmin = async (
             },
         })
     } catch (error) {
+        console.error('❌ Ошибка в getCustomersAdmin:', error);
         next(error)
     }
 }
