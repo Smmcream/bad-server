@@ -167,13 +167,12 @@ export const getOrdersAdmin = async (
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
         if (!res.locals.user) {
             return res.status(401).json({ message: 'Не авторизован' });
         }
 
-        // ✅ ПРОВЕРКА РОЛИ - ВОЗВРАЩАЕМ 403, А НЕ 404!
-        if (res.locals.user.role !== 'admin') {
+        // ✅ ПРОВЕРКА РОЛИ — ИСПРАВЛЕНО!
+        if (!res.locals.user.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -398,7 +397,8 @@ export const getOrderByNumber = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -453,7 +453,7 @@ export const getOrderCurrentUserByNumber = async (
     }
 }
 
-// ✅ POST /order (тест 8) - ИСПРАВЛЕНО!
+// ✅ POST /order (тест 8)
 export const createOrder = async (
     req: Request,
     res: Response,
@@ -467,7 +467,6 @@ export const createOrder = async (
         if (!phone) {
             return next(new BadRequestError('Телефон обязателен'));
         }
-        // Очищаем телефон от пробелов и спецсимволов для валидации
         const cleanPhone = phone.replace(/[\s\-()]/g, '');
         if (!/^\+?\d{10,15}$/.test(cleanPhone)) {
             return next(new BadRequestError('Неверный формат телефона'));
@@ -503,7 +502,7 @@ export const createOrder = async (
             totalAmount: total,
             products: items,
             payment,
-            phone: cleanPhone, // ✅ Сохраняем очищенный телефон
+            phone: cleanPhone,
             email,
             comment,
             customer: userId,
@@ -528,7 +527,8 @@ export const updateOrder = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -564,7 +564,8 @@ export const deleteOrder = async (
     next: NextFunction
 ) => {
     try {
-        if (res.locals.user?.role !== 'admin') {
+        // ✅ ИСПРАВЛЕНО!
+        if (!res.locals.user?.roles?.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
