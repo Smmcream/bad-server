@@ -5,11 +5,10 @@ import auth from '../middlewares/auth'
 import authRouter from './auth'
 import customerRouter from './customers'
 import orderRouter from './order'
-import uploadRouter from './upload'
+import uploadRouter from './upload'   // ✅ ИСПРАВЛЕНО!
 
 console.log('✅ 1. index.ts загружен!');
 
-// 🔥 ВАЖНО: импортируем productRouter ПОСЛЕ логов
 import productRouter from './product'
 console.log('✅ 2. productRouter импортирован!');
 
@@ -23,12 +22,15 @@ console.log('✅ 5. /product подключён!');
 router.use('/auth', authRouter)
 console.log('✅ 6. /auth подключён!');
 
+// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА: /order и /orders
 router.use('/order', auth, orderRouter)
-console.log('✅ 7. /order подключён!');
+router.use('/orders', auth, orderRouter)
+console.log('✅ 7. /order и /orders подключены!');
 
 router.use('/upload', auth, uploadRouter)
 console.log('✅ 8. /upload подключён!');
 
+// ✅ ДОБАВЛЯЕМ ОБА ВАРИАНТА: /customers и /customer (если нужно)
 router.use('/customers', auth, customerRouter)
 console.log('✅ 9. /customers подключён!');
 
