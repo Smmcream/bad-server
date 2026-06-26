@@ -124,12 +124,10 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             delivery: { address: String(address) },
             totalAmount: Number(total),
             comment: comment ? String(comment) : '',
-            customer: res.locals.user?._id,
+            customer: res.locals.user._id,
         })
 
-        if (res.locals.user) {
-            await User.findByIdAndUpdate(res.locals.user._id, { $push: { orders: order._id } })
-        }
+        await User.findByIdAndUpdate(res.locals.user._id, { $push: { orders: order._id } })
         return res.status(201).json(order)
     } catch (error) {
         if (error instanceof MongooseError.ValidationError) return next(new BadRequestError(error.message))
