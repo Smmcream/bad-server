@@ -24,12 +24,11 @@ app.use(urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 10 : 10,
+    max: 10,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
 })
-app.use(limiter)
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -46,6 +45,7 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
+// CSRF endpoint ДО rate-limit (чтобы не считался в лимите)
 app.get('/api/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
@@ -54,6 +54,9 @@ app.get('/api/auth/csrf-token', (req, res) => {
     });
     res.json({ csrfToken: 'test-csrf-token' });
 })
+
+// Rate-limit ПОСЛЕ CSRF
+app.use(limiter)
 
 app.use('/api/auth/login', authLimiter)
 
