@@ -7,10 +7,10 @@ import customerRouter from './customers'
 import orderRouter from './order'
 import uploadRouter from './upload'
 
-console.log('✅ 1. index.ts загружен!');
-
 // 🔥 ВАЖНО: импортируем productRouter ПОСЛЕ логов
 import productRouter from './product'
+
+console.log('✅ 1. index.ts загружен!');
 console.log('✅ 2. productRouter импортирован!');
 
 const router = Router()

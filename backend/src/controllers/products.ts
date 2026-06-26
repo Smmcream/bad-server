@@ -1,4 +1,3 @@
-console.log('✅ getProducts вызван!');
 import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
 import { Error as MongooseError } from 'mongoose'
@@ -8,6 +7,8 @@ import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
 import Product from '../models/product'
 import movingFile from '../utils/movingFile'
+
+console.log('✅ getProducts вызван!');
 
 // GET /product
 const getProducts = async (req: Request, res: Response, next: NextFunction) => {

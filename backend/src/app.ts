@@ -9,10 +9,12 @@ import rateLimit from 'express-rate-limit'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
+import { generateCsrfToken, validateCsrfToken } from './middlewares/csrf'
 
-const { PORT = 3000 } = process.env  // ✅ ПОРТ 3000
+const { PORT = 80 } = process.env
 const app = express()
 
+// Rate-limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -20,7 +22,6 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 })
-
 app.use('/api', limiter)
 
 const authLimiter = rateLimit({
@@ -31,22 +32,30 @@ const authLimiter = rateLimit({
 })
 
 app.use(cookieParser())
-app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-}))
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
+
+// CSRF
+app.use(generateCsrfToken)
+app.use('/api/orders', validateCsrfToken)
+app.use('/api/customers', validateCsrfToken)
+app.use('/api/upload', validateCsrfToken)
 
 app.use(serveStatic(path.join(__dirname, 'public')))
-
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
+// CSRF-токен
 app.get('/api/auth/csrf-token', (req, res) => {
-    res.json({ csrfToken: 'test-csrf-token' })
+    const token = (req as any).csrfToken ? (req as any).csrfToken() : 'test-csrf-token'
+    res.cookie('_csrf', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+    })
+    res.json({ csrfToken: token })
 })
 
 app.use('/api/auth/login', authLimiter)
-
 app.options('*', cors())
 app.use('/api', routes)
 
@@ -55,8 +64,8 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        const dbAddress = 'mongodb://root:example@localhost:27018/weblarek?authSource=admin';
-        await mongoose.connect(dbAddress);
+        const dbAddress = 'mongodb://root:example@localhost:27018/weblarek?authSource=admin'
+        await mongoose.connect(dbAddress)
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)

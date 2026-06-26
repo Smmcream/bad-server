@@ -166,6 +166,35 @@ export const getCustomers = async (
 }
 
 // ============================================================
+// GET /customers/admin - С ПРОВЕРКОЙ РОЛИ (тест 12)
+// ============================================================
+export const getCustomersAdmin = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
+        if (!res.locals.user) {
+            return res.status(401).json({ message: 'Не авторизован' });
+        }
+
+        // ✅ ПРОВЕРКА РОЛИ — ИСПРАВЛЕНО НА roles!
+        if (!res.locals.user.roles?.includes('admin')) {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
+        // ✅ ВОЗВРАЩАЕМ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
+        const users = await User.find({}).populate(['orders', 'lastOrder']);
+        res.status(200).json({
+            customers: users,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ============================================================
 // GET /customers/:id
 // ============================================================
 export const getCustomerById = async (
@@ -174,6 +203,11 @@ export const getCustomerById = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (!res.locals.user?.roles?.includes('admin')) {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
         // ✅ Проверяем, что ID передан
         if (!id) {
@@ -201,6 +235,11 @@ export const updateCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (!res.locals.user?.roles?.includes('admin')) {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));
@@ -245,6 +284,11 @@ export const deleteCustomer = async (
     next: NextFunction
 ) => {
     try {
+        // ✅ ПРОВЕРКА РОЛИ
+        if (!res.locals.user?.roles?.includes('admin')) {
+            return res.status(403).json({ message: 'Доступ запрещен' });
+        }
+
         const { id } = req.params;
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));

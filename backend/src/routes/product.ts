@@ -1,4 +1,3 @@
-console.log('✅ product.ts загружен!');
 import { Router } from 'express'
 import {
     createProduct,
@@ -12,6 +11,8 @@ import {
     validateProductBody,
     validateProductUpdateBody,
 } from '../middlewares/validations'
+
+console.log('✅ product.ts загружен!');
 
 const productRouter = Router()
 

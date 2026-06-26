@@ -1,13 +1,10 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt, { JwtPayload } from 'jsonwebtoken'
-import { Model, Types } from 'mongoose'
+import { Types } from 'mongoose'
 import { ACCESS_TOKEN } from '../config'
 import ForbiddenError from '../errors/forbidden-error'
-import NotFoundError from '../errors/not-found-error'
 import UnauthorizedError from '../errors/unauthorized-error'
-import UserModel, { Role } from '../models/user'
-
-// есть файл middlewares/auth.js, в нём мидлвэр для проверки JWT;
+import UserModel from '../models/user'
 
 const auth = async (req: Request, res: Response, next: NextFunction) => {
     let payload: JwtPayload | null = null
