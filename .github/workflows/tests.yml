@@ -43,54 +43,23 @@ jobs:
         echo "NODE_ENV=test" >> .env
         cat .env
 
-    - name: Clear GitHub Actions cache
-      run: |
-        echo "🧹 Очистка кеша npm..."
-        npm cache clean --force
-        echo "✅ Кеш npm очищен"
-
-    - name: Full clean
-      run: |
-        cd backend
-        rm -rf dist
-        rm -rf node_modules
-        rm -rf package-lock.json
-        echo "✅ Полная очистка"
-
     - name: Install dependencies
       run: |
         cd backend
         npm install
         npm run build
-        echo "✅ Бэкенд собран"
-
-    - name: Wait for MongoDB
-      run: |
-        echo "⏳ Ожидание запуска MongoDB..."
-        for i in {1..30}; do
-          if nc -z localhost 27017; then
-            echo "✅ MongoDB запущена!"
-            break
-          fi
-          echo "⏳ Ждём... ($i/30)"
-          sleep 1
-        done
 
     - name: Import test data
       run: |
-        echo "📥 Импорт данных в MongoDB..."
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection users --drop --file /dump/weblarek.users.json --jsonArray
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection products --drop --file /dump/weblarek.products.json --jsonArray
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection orders --drop --file /dump/weblarek.orders.json --jsonArray
-        echo "✅ Данные импортированы!"
+        docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
+        docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
 
     - name: Start Backend on Port 80
       run: |
         cd backend
-        sudo NODE_ENV=test PORT=80 npm start &
+        sudo PORT=80 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
         curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
