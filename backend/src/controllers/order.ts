@@ -11,8 +11,7 @@ export const getOrders = async (req: Request, res: Response, next: NextFunction)
     try {
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
 
-        const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit
-        let limit = Number(rawLimit) || 10
+        let limit = Number(req.query.limit) || 10
         if (limit > 10) limit = 10
         if (limit < 1) limit = 10
 
@@ -70,8 +69,7 @@ export const getOrdersAdmin = async (req: Request, res: Response, next: NextFunc
     try {
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
 
-        const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit
-        let limit = Number(rawLimit) || 10
+        let limit = Number(req.query.limit) || 10
         if (limit > 10) limit = 10
         if (limit < 1) limit = 10
 
