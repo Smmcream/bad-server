@@ -55,10 +55,10 @@ jobs:
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
 
-    - name: Start Backend on Port 80
+    - name: Start Backend on Port 80 with sudo
       run: |
         cd backend
-        PORT=80 npm start &
+        sudo PORT=80 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
         curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
