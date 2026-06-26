@@ -37,10 +37,9 @@ jobs:
       run: |
         cd backend
         echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
-        echo "NODE_ENV=test" >> .env
         cat .env
 
     - name: Install dependencies
@@ -53,10 +52,8 @@ jobs:
       run: |
         docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
         docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
-        docker cp .dump/weblarek.orders.json $(docker ps -q -f name=mongo):/tmp/orders.json
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection orders --drop --file /tmp/orders.json --jsonArray
 
     - name: Start Backend on Port 80
       run: |
@@ -64,26 +61,11 @@ jobs:
         PORT=80 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
-        curl -v http://127.0.0.1:80/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://127.0.0.1:80/api/orders || echo "❌ Заказы не доступны"
-
-    - name: Debug - test registration
-      run: |
-        echo "=== РЕГИСТРАЦИЯ ==="
-        curl -v -X POST http://127.0.0.1:80/api/auth/register \
-          -H "Content-Type: application/json" \
-          -d '{"email":"test@test.com","password":"password","name":"Test"}' \
-          || echo "❌ Регистрация не работает"
-
-    - name: Debug - show backend logs
-      run: |
-        echo "=== ПРОЦЕССЫ NODE ==="
-        ps aux | grep node
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://localhost:80/api/orders || echo "❌ Заказы не доступны"
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
-      env:
-        API_URL: "http://127.0.0.1:80"
       run: bash $DIR_TESTS/bin/run.sh
