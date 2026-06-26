@@ -64,8 +64,8 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        const dbAddress = 'mongodb://root:example@localhost:27018/weblarek?authSource=admin'
-        await mongoose.connect(dbAddress)
+        const dbAddress = process.env.MONGODB_URI || 'mongodb://root:example@localhost:27018/weblarek?authSource=admin';
+        await mongoose.connect(dbAddress);
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
