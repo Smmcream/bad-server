@@ -4,20 +4,21 @@ import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 
-// ============================================================
-// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ БЕЗОПАСНОГО ПОИСКА
-// ============================================================
+// ✅ НОРМАЛИЗАЦИЯ ЛИМИТА
+const normalizeLimit = (limit: any, defaultLimit: number = 10, maxLimit: number = 10): number => {
+    const parsedLimit = Number(limit);
+    if (isNaN(parsedLimit) || parsedLimit < 1) return defaultLimit;
+    return Math.min(parsedLimit, maxLimit);
+};
+
+// ✅ БЕЗОПАСНЫЙ ПОИСК (тест 11)
 const safeRegexSearch = (search: string) => {
-    // Ограничиваем длину строки (максимум 100 символов)
     const searchString = String(search).slice(0, 100);
-    // Экранируем специальные символы для RegExp
     const escapedSearch = searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(escapedSearch, 'i');
 }
 
-// ============================================================
-// GET /customers
-// ============================================================
+// ✅ GET /customers - БЕЗ ПРОВЕРКИ РОЛИ (тест 10, 11)
 export const getCustomers = async (
     req: Request,
     res: Response,
@@ -26,7 +27,6 @@ export const getCustomers = async (
     try {
         const {
             page = 1,
-            limit = 10,
             sortField = 'createdAt',
             sortOrder = 'desc',
             registrationDateFrom,
@@ -39,6 +39,8 @@ export const getCustomers = async (
             orderCountTo,
             search,
         } = req.query
+
+        const limit = normalizeLimit(req.query.limit, 10, 10);
 
         const filters: FilterQuery<Partial<IUser>> = {}
 
@@ -103,7 +105,6 @@ export const getCustomers = async (
         }
 
         if (search) {
-            // ✅ БЕЗОПАСНО: используем экранирование
             const searchRegex = safeRegexSearch(search as string);
             const orders = await Order.find(
                 {
@@ -128,8 +129,8 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (Number(page) - 1) * limit,
+            limit: limit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -149,7 +150,7 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / limit)
 
         res.status(200).json({
             customers: users,
@@ -157,7 +158,7 @@ export const getCustomers = async (
                 totalUsers,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize: limit,
             },
         })
     } catch (error) {
@@ -165,51 +166,174 @@ export const getCustomers = async (
     }
 }
 
-// ============================================================
-// GET /customers/admin - С ПРОВЕРКОЙ РОЛИ (тест 12)
-// ============================================================
+// ✅ GET /customers/admin - С ПРОВЕРКОЙ РОЛИ (тест 12)
 export const getCustomersAdmin = async (
-    _req: Request,
+    req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРЯЕМ, ЧТО ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ
         if (!res.locals.user) {
             return res.status(401).json({ message: 'Не авторизован' });
         }
 
-        // ✅ ПРОВЕРКА РОЛИ — ИСПРАВЛЕНО НА roles!
-        if (!res.locals.user.roles?.includes('admin')) {
+        if (res.locals.user.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
-        // ✅ ВОЗВРАЩАЕМ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
-        const users = await User.find({}).populate(['orders', 'lastOrder']);
+        const {
+            page = 1,
+            sortField = 'createdAt',
+            sortOrder = 'desc',
+            registrationDateFrom,
+            registrationDateTo,
+            lastOrderDateFrom,
+            lastOrderDateTo,
+            totalAmountFrom,
+            totalAmountTo,
+            orderCountFrom,
+            orderCountTo,
+            search,
+        } = req.query
+
+        const limit = normalizeLimit(req.query.limit, 10, 10);
+
+        const filters: FilterQuery<Partial<IUser>> = {}
+
+        if (registrationDateFrom) {
+            filters.createdAt = {
+                ...filters.createdAt,
+                $gte: new Date(registrationDateFrom as string),
+            }
+        }
+
+        if (registrationDateTo) {
+            const endOfDay = new Date(registrationDateTo as string)
+            endOfDay.setHours(23, 59, 59, 999)
+            filters.createdAt = {
+                ...filters.createdAt,
+                $lte: endOfDay,
+            }
+        }
+
+        if (lastOrderDateFrom) {
+            filters.lastOrderDate = {
+                ...filters.lastOrderDate,
+                $gte: new Date(lastOrderDateFrom as string),
+            }
+        }
+
+        if (lastOrderDateTo) {
+            const endOfDay = new Date(lastOrderDateTo as string)
+            endOfDay.setHours(23, 59, 59, 999)
+            filters.lastOrderDate = {
+                ...filters.lastOrderDate,
+                $lte: endOfDay,
+            }
+        }
+
+        if (totalAmountFrom) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $gte: Number(totalAmountFrom),
+            }
+        }
+
+        if (totalAmountTo) {
+            filters.totalAmount = {
+                ...filters.totalAmount,
+                $lte: Number(totalAmountTo),
+            }
+        }
+
+        if (orderCountFrom) {
+            filters.orderCount = {
+                ...filters.orderCount,
+                $gte: Number(orderCountFrom),
+            }
+        }
+
+        if (orderCountTo) {
+            filters.orderCount = {
+                ...filters.orderCount,
+                $lte: Number(orderCountTo),
+            }
+        }
+
+        if (search) {
+            const searchRegex = safeRegexSearch(search as string);
+            const orders = await Order.find(
+                {
+                    $or: [{ deliveryAddress: searchRegex }],
+                },
+                '_id'
+            )
+
+            const orderIds = orders.map((order) => order._id)
+
+            filters.$or = [
+                { name: searchRegex },
+                { lastOrder: { $in: orderIds } },
+            ]
+        }
+
+        const sort: { [key: string]: any } = {}
+
+        if (sortField && sortOrder) {
+            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
+        }
+
+        const options = {
+            sort,
+            skip: (Number(page) - 1) * limit,
+            limit: limit,
+        }
+
+        const users = await User.find(filters, null, options).populate([
+            'orders',
+            {
+                path: 'lastOrder',
+                populate: {
+                    path: 'products',
+                },
+            },
+            {
+                path: 'lastOrder',
+                populate: {
+                    path: 'customer',
+                },
+            },
+        ])
+
+        const totalUsers = await User.countDocuments(filters)
+        const totalPages = Math.ceil(totalUsers / limit)
+
         res.status(200).json({
             customers: users,
-        });
+            pagination: {
+                totalUsers,
+                totalPages,
+                currentPage: Number(page),
+                pageSize: limit,
+            },
+        })
     } catch (error) {
-        next(error);
+        next(error)
     }
-};
+}
 
-// ============================================================
-// GET /customers/:id
-// ============================================================
+// ✅ GET /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const getCustomerById = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
-        if (!res.locals.user?.roles?.includes('admin')) {
+        if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
         const { id } = req.params;
-        // ✅ Проверяем, что ID передан
         if (!id) {
             return next(new NotFoundError('ID пользователя не указан'));
         }
@@ -226,17 +350,14 @@ export const getCustomerById = async (
     }
 }
 
-// ============================================================
-// PATCH /customers/:id
-// ============================================================
+// ✅ PATCH /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const updateCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
-        if (!res.locals.user?.roles?.includes('admin')) {
+        if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 
@@ -245,7 +366,6 @@ export const updateCustomer = async (
             return next(new NotFoundError('ID пользователя не указан'));
         }
 
-        // ✅ БЕЗОПАСНО: разрешаем обновлять только безопасные поля
         const allowedUpdates = ['name', 'email', 'phone', 'deliveryAddress'];
         const updates: any = {};
         allowedUpdates.forEach(field => {
@@ -275,17 +395,14 @@ export const updateCustomer = async (
     }
 }
 
-// ============================================================
-// DELETE /customers/:id
-// ============================================================
+// ✅ DELETE /customers/:id - С ПРОВЕРКОЙ РОЛИ
 export const deleteCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        // ✅ ПРОВЕРКА РОЛИ
-        if (!res.locals.user?.roles?.includes('admin')) {
+        if (res.locals.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Доступ запрещен' });
         }
 

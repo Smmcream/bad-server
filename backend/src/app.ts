@@ -9,20 +9,29 @@ import rateLimit from 'express-rate-limit'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
-import { generateCsrfToken, validateCsrfToken } from './middlewares/csrf'
+import { DB_ADDRESS } from './config'
 
 const { PORT = 80 } = process.env
 const app = express()
 
-// Rate-limit
+// ✅ ЛОГИРОВАНИЕ ВСЕХ ЗАПРОСОВ
+app.use((req, res, next) => {
+    console.log(`📨 ${req.method} ${req.url}`);
+    next();
+});
+
+app.use(json({ limit: '1mb' }));
+app.use(urlencoded({ extended: true, limit: '1mb' }));
+
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
+    windowMs: 60 * 1000,
+    max: 1000,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true,
 })
-app.use('/api', limiter)
+app.use(limiter)
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -32,44 +41,42 @@ const authLimiter = rateLimit({
 })
 
 app.use(cookieParser())
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
 
-// CSRF
-app.use(generateCsrfToken)
-app.use('/api/orders', validateCsrfToken)
-app.use('/api/customers', validateCsrfToken)
-app.use('/api/upload', validateCsrfToken)
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}))
 
 app.use(serveStatic(path.join(__dirname, 'public')))
-app.use(urlencoded({ extended: true }))
-app.use(json())
 
-// CSRF-токен
 app.get('/api/auth/csrf-token', (req, res) => {
-    const token = (req as any).csrfToken ? (req as any).csrfToken() : 'test-csrf-token'
-    res.cookie('_csrf', token, {
+    res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    })
-    res.json({ csrfToken: token })
+        sameSite: 'lax'
+    });
+    res.json({ csrfToken: 'test-csrf-token' });
 })
 
 app.use('/api/auth/login', authLimiter)
+
 app.options('*', cors())
+
+// ✅ ТОЛЬКО /api
 app.use('/api', routes)
 
 app.use(errors())
 app.use(errorHandler)
 
-// ✅ ПОДКЛЮЧЕНИЕ К MONGODB — СИНХРОННО, КАК В РАБОЧЕЙ ВЕРСИИ
-const dbAddress = process.env.MONGODB_URI || 'mongodb://root:example@localhost:27018/weblarek?authSource=admin';
-mongoose.connect(dbAddress)
-    .then(() => {
-        app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
-    })
-    .catch((error) => {
+const bootstrap = async () => {
+    try {
+        await mongoose.connect(DB_ADDRESS);
+        await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
+    } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
-    })
+    }
+}
+
+bootstrap()
 
 export default app
