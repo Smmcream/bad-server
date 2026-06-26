@@ -36,7 +36,7 @@ jobs:
     - name: Create .env
       run: |
         cd backend
-        echo "PORT=3000" > .env
+        echo "PORT=80" > .env
         echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
@@ -58,18 +58,32 @@ jobs:
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
         docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection orders --drop --file /tmp/orders.json --jsonArray
 
-    - name: Start Backend
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        PORT=3000 npm start &
+        PORT=80 npm start &
         sleep 15
-        curl -v http://127.0.0.1:3000/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://127.0.0.1:3000/api/orders || echo "❌ Заказы не доступны"
+        echo "=== ПРОВЕРКА БЭКЕНДА ==="
+        curl -v http://127.0.0.1:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://127.0.0.1:80/api/orders || echo "❌ Заказы не доступны"
+
+    - name: Debug - test registration
+      run: |
+        echo "=== РЕГИСТРАЦИЯ ==="
+        curl -v -X POST http://127.0.0.1:80/api/auth/register \
+          -H "Content-Type: application/json" \
+          -d '{"email":"test@test.com","password":"password","name":"Test"}' \
+          || echo "❌ Регистрация не работает"
+
+    - name: Debug - show backend logs
+      run: |
+        echo "=== ПРОЦЕССЫ NODE ==="
+        ps aux | grep node
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
       env:
-        API_URL: "http://127.0.0.1:3000"
+        API_URL: "http://127.0.0.1:80"
       run: bash $DIR_TESTS/bin/run.sh
