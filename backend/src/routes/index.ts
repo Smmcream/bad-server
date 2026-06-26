@@ -23,8 +23,8 @@ console.log('✅ 5. /product подключён!');
 router.use('/auth', authRouter)
 console.log('✅ 6. /auth подключён!');
 
-router.use('/order', auth, orderRouter)
-console.log('✅ 7. /order подключён!');
+router.use('/orders', auth, orderRouter)  // ⬅️ ИСПРАВЛЕНО!
+console.log('✅ 7. /orders подключён!');
 
 router.use('/upload', auth, uploadRouter)
 console.log('✅ 8. /upload подключён!');
