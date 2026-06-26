@@ -36,8 +36,8 @@ jobs:
     - name: Create .env
       run: |
         cd backend
-        echo "PORT=3000" > .env
-        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
+        echo "PORT=80" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
         echo "NODE_ENV=test" >> .env
@@ -87,19 +87,19 @@ jobs:
           mongoimport --host localhost --port 27017 --db weblarek --collection orders --drop --file /dump/weblarek.orders.json --jsonArray
         echo "✅ Данные импортированы!"
 
-    - name: Start Backend on Port 3000
+    - name: Start Backend on Port 80
       run: |
         cd backend
-        NODE_ENV=test PORT=3000 npm start &
+        sudo NODE_ENV=test PORT=80 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
-        curl -v http://127.0.0.1:3000/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://127.0.0.1:3000/api/orders || echo "❌ Заказы не доступны"
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://localhost:80/api/orders || echo "❌ Заказы не доступны"
 
     - name: Debug - test registration
       run: |
         echo "=== РЕГИСТРАЦИЯ ==="
-        curl -v -X POST http://127.0.0.1:3000/api/auth/register \
+        curl -v -X POST http://localhost:80/api/auth/register \
           -H "Content-Type: application/json" \
           -d '{"email":"test@test.com","password":"password","name":"Test"}' \
           || echo "❌ Регистрация не работает"
@@ -113,6 +113,4 @@ jobs:
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
-      env:
-        API_URL: "http://127.0.0.1:3000"
       run: bash $DIR_TESTS/bin/run.sh
