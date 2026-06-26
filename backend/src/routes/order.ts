@@ -10,27 +10,24 @@ import {
     updateOrder,
 } from '../controllers/order'
 import auth from '../middlewares/auth'
+import requireAdmin from '../middlewares/requireAdmin'
 import { validateOrderBody } from '../middlewares/validations'
 
 const orderRouter = Router()
 
-// ✅ БЕЗ АВТОРИЗАЦИИ (тест 5)
+// Публичные маршруты
 orderRouter.get('/', getOrders)
 
-// ✅ С АВТОРИЗАЦИЕЙ (тест 9) - ИСПОЛЬЗУЕМ getOrdersAdmin
-orderRouter.get('/admin', auth, getOrdersAdmin)
+// Маршруты для админов
+orderRouter.get('/admin', auth, requireAdmin, getOrdersAdmin)
 
-// ✅ POST /orders (тест 8)
+// Маршруты для авторизованных пользователей
 orderRouter.post('/', auth, validateOrderBody, createOrder)
-
-// ✅ POST /order (для единообразия)
-orderRouter.post('/order', auth, validateOrderBody, createOrder)
-
 orderRouter.get('/all', auth, getOrdersCurrentUser)
 orderRouter.get('/all/me', auth, getOrdersCurrentUser)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
-orderRouter.delete('/:id', auth, deleteOrder)
+orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
 export default orderRouter

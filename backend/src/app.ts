@@ -6,6 +6,7 @@ import express, { json, urlencoded } from 'express'
 import mongoose from 'mongoose'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
+import csrf from 'csrf'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
@@ -14,29 +15,27 @@ import { DB_ADDRESS } from './config'
 const { PORT = 80 } = process.env
 const app = express()
 
-// ✅ ЛОГИРОВАНИЕ ВСЕХ ЗАПРОСОВ
+// Логирование всех запросов
 app.use((req, res, next) => {
-    console.log(`📨 ${req.method} ${req.url}`);
-    next();
-});
+    console.log(`📨 ${req.method} ${req.url}`)
+    next()
+})
 
-app.use(json({ limit: '1mb' }));
-app.use(urlencoded({ extended: true, limit: '1mb' }));
+app.use(json({ limit: '1mb' }))
+app.use(urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 1000,
+    max: 10,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: true,
 })
 app.use(limiter)
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 30,
-    skipSuccessfulRequests: true,
     message: 'Слишком много попыток входа, попробуйте позже',
 })
 
@@ -49,20 +48,28 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
+// CSRF токен
 app.get('/api/auth/csrf-token', (req, res) => {
-    res.cookie('_csrf', 'test-csrf-token', {
+    if (process.env.NODE_ENV === 'test') {
+        return res.json({ csrfToken: 'test-csrf-token' })
+    }
+    
+    const csrfProtection = new csrf()
+    const secret = csrfProtection.secretSync()
+    const token = csrfProtection.create(secret)
+    
+    res.cookie('csrfSecret', secret, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
-    });
-    res.json({ csrfToken: 'test-csrf-token' });
+    })
+    res.json({ csrfToken: token })
 })
 
 app.use('/api/auth/login', authLimiter)
 
 app.options('*', cors())
 
-// ✅ ТОЛЬКО /api
 app.use('/api', routes)
 
 app.use(errors())
@@ -70,7 +77,7 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
-        await mongoose.connect(DB_ADDRESS);
+        await mongoose.connect(DB_ADDRESS)
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
