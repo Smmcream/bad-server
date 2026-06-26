@@ -25,99 +25,14 @@ jobs:
     steps:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
-      with:
-        ref: fix-tests
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v4
       with:
         node-version: 18.x
 
-    - name: Create .env
-      run: |
-        cd backend
-        echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
-        echo "JWT_SECRET=test_secret" >> .env
-        echo "ADMIN_EMAIL=admin@example.com" >> .env
-        echo "NODE_ENV=test" >> .env
-        cat .env
-
-    - name: Clear GitHub Actions cache
-      run: |
-        echo "🧹 Очистка кеша npm..."
-        npm cache clean --force
-        echo "✅ Кеш npm очищен"
-
-    - name: Full clean
-      run: |
-        cd backend
-        rm -rf dist
-        rm -rf node_modules
-        rm -rf package-lock.json
-        echo "✅ Полная очистка"
-
-    - name: Install dependencies
-      run: |
-        cd backend
-        npm install
-        npm run build
-        echo "✅ Бэкенд собран"
-
-    - name: Wait for MongoDB
-      run: |
-        echo "⏳ Ожидание запуска MongoDB..."
-        for i in {1..30}; do
-          if nc -z localhost 27017; then
-            echo "✅ MongoDB запущена!"
-            break
-          fi
-          echo "⏳ Ждём... ($i/30)"
-          sleep 1
-        done
-
-    - name: Import test data
-      run: |
-        echo "📥 Импорт данных в MongoDB..."
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection users --drop --file /dump/weblarek.users.json --jsonArray
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection products --drop --file /dump/weblarek.products.json --jsonArray
-        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
-          mongoimport --host localhost --port 27017 --db weblarek --collection orders --drop --file /dump/weblarek.orders.json --jsonArray
-        echo "✅ Данные импортированы!"
-
-    - name: Start Backend on Port 80
-      run: |
-        cd backend
-        NODE_ENV=test PORT=80 npm start &
-        sleep 15
-        echo "=== ПРОВЕРКА БЭКЕНДА ==="
-        curl -v http://127.0.0.1:80/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://127.0.0.1:80/api/orders || echo "❌ Заказы не доступны"
-
-    - name: Debug - test registration
-      run: |
-        echo "=== РЕГИСТРАЦИЯ ==="
-        curl -v -X POST http://127.0.0.1:80/api/auth/register \
-          -H "Content-Type: application/json" \
-          -d '{"email":"test@test.com","password":"password","name":"Test"}' \
-          || echo "❌ Регистрация не работает"
-
-    - name: Debug - show backend logs
-      run: |
-        echo "=== ПРОЦЕССЫ NODE ==="
-        ps aux | grep node
-
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
-    - name: Fix tests
-      run: |
-        cd $DIR_TESTS
-        find . -type f -exec sed -i 's/localhost/127.0.0.1/g' {} \;
-
     - name: Run tests
-      env:
-        API_URL: "http://127.0.0.1:80"
       run: bash $DIR_TESTS/bin/run.sh
