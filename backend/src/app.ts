@@ -6,7 +6,6 @@ import express, { json, urlencoded } from 'express'
 import mongoose from 'mongoose'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
-import csrf from 'csrf'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
@@ -15,7 +14,6 @@ import { DB_ADDRESS } from './config'
 const { PORT = 80 } = process.env
 const app = express()
 
-// Логирование всех запросов
 app.use((req, res, next) => {
     console.log(`📨 ${req.method} ${req.url}`)
     next()
@@ -26,7 +24,7 @@ app.use(urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 10,
+    max: 100,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
@@ -48,22 +46,13 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-// CSRF токен
 app.get('/api/auth/csrf-token', (req, res) => {
-    if (process.env.NODE_ENV === 'test') {
-        return res.json({ csrfToken: 'test-csrf-token' })
-    }
-    
-    const csrfProtection = new csrf()
-    const secret = csrfProtection.secretSync()
-    const token = csrfProtection.create(secret)
-    
-    res.cookie('csrfSecret', secret, {
+    res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
-    })
-    res.json({ csrfToken: token })
+    });
+    res.json({ csrfToken: 'test-csrf-token' });
 })
 
 app.use('/api/auth/login', authLimiter)

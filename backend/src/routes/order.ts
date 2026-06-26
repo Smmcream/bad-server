@@ -18,15 +18,17 @@ const orderRouter = Router()
 // Публичные маршруты
 orderRouter.get('/', getOrders)
 
-// Маршруты для админов
+// ⚠️ ВАЖНО: конкретные маршруты ДО параметризованных!
 orderRouter.get('/admin', auth, requireAdmin, getOrdersAdmin)
-
-// Маршруты для авторизованных пользователей
-orderRouter.post('/', auth, validateOrderBody, createOrder)
 orderRouter.get('/all', auth, getOrdersCurrentUser)
 orderRouter.get('/all/me', auth, getOrdersCurrentUser)
-orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
+
+// Параметризованные маршруты — ПОСЛЕ конкретных
+orderRouter.get('/:orderNumber', auth, getOrderByNumber)
+
+// POST, PATCH, DELETE
+orderRouter.post('/', auth, validateOrderBody, createOrder)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
