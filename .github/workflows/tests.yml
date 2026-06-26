@@ -36,39 +36,70 @@ jobs:
     - name: Create .env
       run: |
         cd backend
-        echo "PORT=80" > .env
-        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
+        echo "PORT=3000" > .env
+        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
         echo "JWT_SECRET=test_secret" >> .env
         echo "ADMIN_EMAIL=admin@example.com" >> .env
         echo "NODE_ENV=test" >> .env
         cat .env
+
+    - name: Clear GitHub Actions cache
+      run: |
+        echo "🧹 Очистка кеша npm..."
+        npm cache clean --force
+        echo "✅ Кеш npm очищен"
+
+    - name: Full clean
+      run: |
+        cd backend
+        rm -rf dist
+        rm -rf node_modules
+        rm -rf package-lock.json
+        echo "✅ Полная очистка"
 
     - name: Install dependencies
       run: |
         cd backend
         npm install
         npm run build
+        echo "✅ Бэкенд собран"
+
+    - name: Wait for MongoDB
+      run: |
+        echo "⏳ Ожидание запуска MongoDB..."
+        for i in {1..30}; do
+          if nc -z localhost 27017; then
+            echo "✅ MongoDB запущена!"
+            break
+          fi
+          echo "⏳ Ждём... ($i/30)"
+          sleep 1
+        done
 
     - name: Import test data
       run: |
-        docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
-        docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
-        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
+        echo "📥 Импорт данных в MongoDB..."
+        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
+          mongoimport --host localhost --port 27017 --db weblarek --collection users --drop --file /dump/weblarek.users.json --jsonArray
+        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
+          mongoimport --host localhost --port 27017 --db weblarek --collection products --drop --file /dump/weblarek.products.json --jsonArray
+        docker run --rm --network host -v $(pwd)/.dump:/dump mongo:latest \
+          mongoimport --host localhost --port 27017 --db weblarek --collection orders --drop --file /dump/weblarek.orders.json --jsonArray
+        echo "✅ Данные импортированы!"
 
-    - name: Start Backend on Port 80
+    - name: Start Backend on Port 3000
       run: |
         cd backend
-        sudo PORT=80 npm start &
+        NODE_ENV=test PORT=3000 npm start &
         sleep 15
         echo "=== ПРОВЕРКА БЭКЕНДА ==="
-        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
-        curl -v http://localhost:80/api/orders || echo "❌ Заказы не доступны"
+        curl -v http://127.0.0.1:3000/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://127.0.0.1:3000/api/orders || echo "❌ Заказы не доступны"
 
     - name: Debug - test registration
       run: |
         echo "=== РЕГИСТРАЦИЯ ==="
-        curl -v -X POST http://localhost:80/api/auth/register \
+        curl -v -X POST http://127.0.0.1:3000/api/auth/register \
           -H "Content-Type: application/json" \
           -d '{"email":"test@test.com","password":"password","name":"Test"}' \
           || echo "❌ Регистрация не работает"
@@ -82,4 +113,6 @@ jobs:
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
+      env:
+        API_URL: "http://127.0.0.1:3000"
       run: bash $DIR_TESTS/bin/run.sh
