@@ -25,14 +25,51 @@ jobs:
     steps:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
+      with:
+        ref: fix-tests
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v4
       with:
         node-version: 18.x
 
+    - name: Create .env
+      run: |
+        cd backend
+        echo "PORT=3000" > .env
+        echo "MONGODB_URI=mongodb://mongo:27017/weblarek" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "ADMIN_EMAIL=admin@example.com" >> .env
+        echo "NODE_ENV=test" >> .env
+        cat .env
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm install
+        npm run build
+
+    - name: Import test data
+      run: |
+        docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
+        docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
+        docker cp .dump/weblarek.orders.json $(docker ps -q -f name=mongo):/tmp/orders.json
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection orders --drop --file /tmp/orders.json --jsonArray
+
+    - name: Start Backend
+      run: |
+        cd backend
+        PORT=3000 npm start &
+        sleep 15
+        curl -v http://127.0.0.1:3000/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://127.0.0.1:3000/api/orders || echo "❌ Заказы не доступны"
+
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
 
     - name: Run tests
+      env:
+        API_URL: "http://127.0.0.1:3000"
       run: bash $DIR_TESTS/bin/run.sh
