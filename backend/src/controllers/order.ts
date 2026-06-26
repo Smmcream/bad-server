@@ -11,7 +11,8 @@ export const getOrders = async (req: Request, res: Response, next: NextFunction)
     try {
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
 
-        let limit = Number(req.query.limit) || 10
+        const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit
+        let limit = Number(rawLimit) || 10
         if (limit > 10) limit = 10
         if (limit < 1) limit = 10
 
@@ -69,7 +70,8 @@ export const getOrdersAdmin = async (req: Request, res: Response, next: NextFunc
     try {
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
 
-        let limit = Number(req.query.limit) || 10
+        const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit
+        let limit = Number(rawLimit) || 10
         if (limit > 10) limit = 10
         if (limit < 1) limit = 10
 
@@ -122,10 +124,12 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             delivery: { address: String(address) },
             totalAmount: Number(total),
             comment: comment ? String(comment) : '',
-            customer: res.locals.user._id,
+            customer: res.locals.user?._id,
         })
 
-        await User.findByIdAndUpdate(res.locals.user._id, { $push: { orders: order._id } })
+        if (res.locals.user) {
+            await User.findByIdAndUpdate(res.locals.user._id, { $push: { orders: order._id } })
+        }
         return res.status(201).json(order)
     } catch (error) {
         if (error instanceof MongooseError.ValidationError) return next(new BadRequestError(error.message))
