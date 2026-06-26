@@ -34,9 +34,11 @@ export const getOrders = async (
             search,
         } = req.query
 
+        // ✅ НОРМАЛИЗАЦИЯ ЛИМИТА
         let limit = Number(req.query.limit) || 10;
         if (limit > 10) limit = 10;
         if (limit < 1) limit = 10;
+        console.log('📦 limit:', limit);
 
         const filters: FilterQuery<Partial<IOrder>> = {}
 
@@ -144,6 +146,8 @@ export const getOrders = async (
         )
 
         const orders = await Order.aggregate(aggregatePipeline)
+        console.log('📦 orders found:', orders.length);
+
         const totalOrders = await Order.countDocuments(filters)
         const totalPages = Math.ceil(totalOrders / limit)
 

@@ -4,6 +4,7 @@ import BadRequestError from '../errors/bad-request-error'
 import path from 'path'
 import fs, { mkdirSync } from 'fs'
 import crypto from 'crypto'
+import sharp from 'sharp'  // ✅ ДОБАВЛЯЕМ
 
 export const uploadFile = async (
     req: Request,
@@ -38,6 +39,19 @@ export const uploadFile = async (
         const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
         if (!allowedMimeTypes.includes(req.file.mimetype)) {
             return next(new BadRequestError('Недопустимый тип файла. Только изображения'));
+        }
+
+        // ✅ ПРОВЕРКА МЕТАДАННЫХ С SHARP (тест 16)
+        try {
+            const metadata = await sharp(req.file.buffer).metadata();
+            if (!metadata.width || !metadata.height) {
+                return next(new BadRequestError('Неверный формат изображения'));
+            }
+            if (metadata.width < 100 || metadata.height < 100) {
+                return next(new BadRequestError('Изображение слишком маленькое (минимум 100x100)'));
+            }
+        } catch (sharpError) {
+            return next(new BadRequestError('Неверный формат изображения'));
         }
 
         // Перемещаем файл

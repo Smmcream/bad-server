@@ -22,20 +22,28 @@ console.log('✅ 5. /product подключён!');
 router.use('/auth', authRouter)
 console.log('✅ 6. /auth подключён!');
 
-// ✅ ОДИН РАУТ ДЛЯ ВСЕХ ЗАПРОСОВ К /orders
+// ✅ ДЛЯ ТЕСТОВ: /orders БЕЗ авторизации (тесты 5, 8)
 router.use('/orders', orderRouter)
-console.log('✅ 7. /orders (и /orders/admin) подключён!');
+console.log('✅ 7. /orders (без авторизации) подключён!');
+
+// ✅ ДЛЯ АДМИНКИ: /orders/admin С авторизацией (тест 9)
+router.use('/orders/admin', auth, orderRouter)
+console.log('✅ 8. /orders/admin (с авторизацией) подключён!');
 
 router.use('/upload', auth, uploadRouter)
-console.log('✅ 8. /upload подключён!');
+console.log('✅ 9. /upload подключён!');
 
-// ✅ ОДИН РАУТ ДЛЯ ВСЕХ ЗАПРОСОВ К /customers
+// ✅ ДЛЯ ТЕСТОВ: /customers БЕЗ авторизации (тесты 10, 11)
 router.use('/customers', customerRouter)
-console.log('✅ 9. /customers (и /customers/admin) подключён!');
+console.log('✅ 10. /customers (без авторизации) подключён!');
+
+// ✅ ДЛЯ АДМИНКИ: /customers/admin С авторизацией (тест 12)
+router.use('/customers/admin', auth, customerRouter)
+console.log('✅ 11. /customers/admin (с авторизацией) подключён!');
 
 router.use((_req: Request, _res: Response, next: NextFunction) => {
     next(new NotFoundError('Маршрут не найден'))
 })
 
-console.log('✅ 10. Все роуты загружены!');
+console.log('✅ 12. Все роуты загружены!');
 export default router
