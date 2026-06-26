@@ -28,7 +28,7 @@ orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 
 // POST, PATCH, DELETE
-orderRouter.post('/', validateOrderBody, createOrder)
+orderRouter.post('/', validateOrderBody, auth, createOrder)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 

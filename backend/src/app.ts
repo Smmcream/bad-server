@@ -29,7 +29,7 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 })
-app.use(limiter)
+//app.use(limiter)
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
