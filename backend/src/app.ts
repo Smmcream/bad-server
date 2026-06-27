@@ -46,7 +46,7 @@ app.use(cors({
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.get('/api/auth/csrf-token', (req, res) => {
+app.get('/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -55,7 +55,7 @@ app.get('/api/auth/csrf-token', (req, res) => {
     res.json({ csrfToken: 'test-csrf-token' });
 })
 
-app.use('/api/auth/login', authLimiter)
+app.use('/auth/login', authLimiter)
 
 app.options('{*path}', cors())
 
