@@ -8,12 +8,11 @@ import User from '../models/user'
 
 // GET /orders - публичный
 export const getOrders = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-        // Проверка на NoSQL-инъекцию
-        for (const key of Object.keys(req.query)) {
-            if (key.includes('$')) {
-                return next(new BadRequestError('Недопустимые параметры запроса'))
-            }
+    try {
+        // Проверка на NoSQL-инъекцию (проверяем сырой URL)
+        const rawUrl = req.originalUrl || req.url || ''
+        if (rawUrl.includes('$expr') || rawUrl.includes('$function')) {
+            return next(new BadRequestError('Недопустимые параметры запроса'))
         }
         
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
@@ -148,7 +147,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 // GET /orders/all
 export const getOrdersCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-                // Проверка на NoSQL-инъекцию
+        // Проверка на NoSQL-инъекцию
         const queryStr = JSON.stringify(req.query)
         if (queryStr.includes('$expr') || queryStr.includes('$function') || queryStr.includes('$ne')) {
             return next(new BadRequestError('Недопустимые параметры запроса'))
