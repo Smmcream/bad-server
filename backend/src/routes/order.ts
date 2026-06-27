@@ -5,39 +5,30 @@ import {
     getOrderByNumber,
     getOrderCurrentUserByNumber,
     getOrders,
+    getOrdersAdmin,
     getOrdersCurrentUser,
     updateOrder,
 } from '../controllers/order'
 import auth from '../middlewares/auth'
-import { validateOrderBody } from '../middlewares/validations'
-
-// Убираем Role, так как он не используется
-// import { Role } from '../models/user'
+import requireAdmin from '../middlewares/requireAdmin'
 
 const orderRouter = Router()
 
-orderRouter.post('/', auth, validateOrderBody, createOrder)
-orderRouter.get('/all', auth, getOrders)
-orderRouter.get('/all/me', auth, getOrdersCurrentUser)
-orderRouter.get(
-    '/:orderNumber',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    getOrderByNumber
-)
-orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
-orderRouter.patch(
-    '/:orderNumber',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    updateOrder
-)
+// Публичные маршруты
+orderRouter.get('/', getOrders)
 
-orderRouter.delete(
-    '/:id',
-    auth,
-    // roleGuardMiddleware(Role.Admin), // Временно отключено
-    deleteOrder
-)
+// Конкретные маршруты ДО параметризованных!
+orderRouter.get('/admin', auth, requireAdmin, getOrdersAdmin)
+orderRouter.get('/all', auth, requireAdmin, getOrders)  // ← только админы
+orderRouter.get('/all/me', auth, getOrdersCurrentUser)
+orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
+
+// Параметризованные маршруты — ПОСЛЕ конкретных
+orderRouter.get('/:orderNumber', auth, getOrderByNumber)
+
+// POST — валидация ДО auth (чтобы вернуть 400 при плохих данных)
+orderRouter.post('/', auth, createOrder)
+orderRouter.patch('/:orderNumber', auth, updateOrder)
+orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
 export default orderRouter

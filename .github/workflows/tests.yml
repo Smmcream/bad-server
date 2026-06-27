@@ -25,11 +25,45 @@ jobs:
     steps:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
+      with:
+        ref: fix-tests
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v4
       with:
         node-version: 18.x
+
+    - name: Create .env
+      run: |
+        cd backend
+        echo "PORT=80" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/weblarek" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "ADMIN_EMAIL=admin@example.com" >> .env
+        echo "NODE_ENV=test" >> .env
+        cat .env
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm install
+        npm run build
+
+    - name: Import test data
+      run: |
+        docker cp .dump/weblarek.users.json $(docker ps -q -f name=mongo):/tmp/users.json
+        docker cp .dump/weblarek.products.json $(docker ps -q -f name=mongo):/tmp/products.json
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection users --drop --file /tmp/users.json --jsonArray
+        docker exec -i $(docker ps -q -f name=mongo) mongoimport --db weblarek --collection products --drop --file /tmp/products.json --jsonArray
+
+    - name: Start Backend on Port 80 with sudo
+      run: |
+        cd backend
+        sudo PORT=80 npm start &
+        sleep 15
+        echo "=== ПРОВЕРКА БЭКЕНДА ==="
+        curl -v http://localhost:80/api/auth/csrf-token || echo "❌ CSRF не работает"
+        curl -v http://localhost:80/api/orders || echo "❌ Заказы не доступны"
 
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
