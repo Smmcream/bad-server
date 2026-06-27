@@ -11,7 +11,6 @@ import {
 } from '../controllers/order'
 import auth from '../middlewares/auth'
 import requireAdmin from '../middlewares/requireAdmin'
-import { validateOrderBody } from '../middlewares/validations'
 
 const orderRouter = Router()
 
@@ -28,7 +27,7 @@ orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 
 // POST — валидация ДО auth (чтобы вернуть 400 при плохих данных)
-orderRouter.post('/', validateOrderBody, createOrder)
+orderRouter.post('/', auth, createOrder)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
