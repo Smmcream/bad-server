@@ -121,6 +121,11 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     try {
         const { items, payment, email, phone, address, total, comment } = req.body
 
+        // Ручная валидация телефона
+        if (phone && phone.length > 30) {
+            return next(new BadRequestError('Некорректный телефон'))
+        }
+
         const order = await Order.create({
             products: items,
             payment,
