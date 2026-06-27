@@ -24,7 +24,7 @@ app.use(urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 40 : 10,
+    max: 40,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
@@ -44,9 +44,11 @@ app.use(cors({
     credentials: true,
 }))
 
+app.options('{*path}', cors())
+
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.get('/api/auth/csrf-token', (req, res) => {
+app.get('/auth/csrf-token', (req, res) => {
     res.cookie('_csrf', 'test-csrf-token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -55,18 +57,18 @@ app.get('/api/auth/csrf-token', (req, res) => {
     res.json({ csrfToken: 'test-csrf-token' });
 })
 
-app.use('/api/auth/login', authLimiter)
+//app.use('/auth/login', authLimiter)
 
-app.options('*', cors())
-
-app.use('/api', routes)
+app.use(['/api', '/'], routes)
 
 app.use(errors())
 app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
+        console.log('🔄 Подключение к MongoDB:', DB_ADDRESS)
         await mongoose.connect(DB_ADDRESS)
+        console.log('✅ MongoDB подключена')
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
