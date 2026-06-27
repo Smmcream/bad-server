@@ -66,10 +66,13 @@ app.use(errorHandler)
 
 const bootstrap = async () => {
     try {
+        console.log('🔄 Подключение к MongoDB:', DB_ADDRESS)
         await mongoose.connect(DB_ADDRESS)
+        console.log('✅ MongoDB подключена')
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
+        // Не падаем, продолжаем работать
     }
 }
 
