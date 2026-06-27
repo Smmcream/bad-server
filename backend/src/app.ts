@@ -57,7 +57,7 @@ app.get('/api/auth/csrf-token', (req, res) => {
 
 app.use('/api/auth/login', authLimiter)
 
-app.options('*', cors())
+app.options('{*path}', cors())
 
 app.use('/api', routes)
 
