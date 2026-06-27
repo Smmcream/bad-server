@@ -2,8 +2,8 @@ services:
   frontend:
     build:
       context: frontend
-    env_file:
-      - frontend/.env
+    environment:
+      - VITE_API_ORIGIN=http://localhost/api
     volumes:
       - frontend:/app/frontend/dist
 
@@ -15,8 +15,6 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - db:/data/db
-    ports:
-      - 27018:27017
     networks:
       - internal
 
@@ -24,8 +22,10 @@ services:
     restart: always
     build:
       context: backend
-    env_file:
-      - backend/.env
+    environment:
+      - PORT=3000
+      - DB_ADDRESS=mongodb://root:example@mongo:27017/weblarek?authSource=admin
+      - JWT_SECRET=JWT_SECRET
     volumes:
       - ./backend/src:/app/src
       - public:/app/src/public
