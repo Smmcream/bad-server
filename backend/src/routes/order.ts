@@ -20,7 +20,7 @@ orderRouter.get('/', getOrders)
 
 // ⚠️ ВАЖНО: конкретные маршруты ДО параметризованных!
 orderRouter.get('/admin', auth, requireAdmin, getOrdersAdmin)
-orderRouter.get('/all', auth, getOrdersCurrentUser)
+orderRouter.get('/all', auth, getOrders)
 orderRouter.get('/all/me', auth, getOrdersCurrentUser)
 orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 
@@ -28,7 +28,7 @@ orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 
 // POST, PATCH, DELETE
-orderRouter.post('/', validateOrderBody, createOrder)
+orderRouter.post('/', validateOrderBody, auth, createOrder)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
