@@ -128,7 +128,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             phone: String(phone),
             delivery: { address: String(address) },
             totalAmount: Number(total),
-            comment: comment ? String(comment) : '',
+            comment: comment ? String(comment).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '',
             customer: res.locals.user._id,
         })
 

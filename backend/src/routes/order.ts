@@ -28,7 +28,7 @@ orderRouter.get('/me/:orderNumber', auth, getOrderCurrentUserByNumber)
 orderRouter.get('/:orderNumber', auth, getOrderByNumber)
 
 // POST — валидация ДО auth (чтобы вернуть 400 при плохих данных)
-orderRouter.post('/', validateOrderBody, auth, createOrder)
+orderRouter.post('/', auth, validateOrderBody, createOrder)
 orderRouter.patch('/:orderNumber', auth, updateOrder)
 orderRouter.delete('/:id', auth, requireAdmin, deleteOrder)
 
