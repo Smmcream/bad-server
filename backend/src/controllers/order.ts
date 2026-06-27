@@ -148,16 +148,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 // GET /orders/all
 export const getOrdersCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-                // Проверка на NoSQL-инъекцию (глубокая)
-        const checkForDollar = (obj: any): boolean => {
-            if (typeof obj !== 'object' || obj === null) return false
-            for (const key of Object.keys(obj)) {
-                if (key.includes('$')) return true
-                if (typeof obj[key] === 'object' && checkForDollar(obj[key])) return true
-            }
-            return false
-        }
-        if (checkForDollar(req.query)) {
+                // Проверка на NoSQL-инъекцию
+        const queryStr = JSON.stringify(req.query)
+        if (queryStr.includes('$expr') || queryStr.includes('$function') || queryStr.includes('$ne')) {
             return next(new BadRequestError('Недопустимые параметры запроса'))
         }
         

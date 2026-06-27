@@ -20,7 +20,7 @@ const safeRegexSearch = (search: string) => {
 export const getCustomers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Проверка роли: только админы могут видеть всех пользователей
-        if (res.locals.user && !res.locals.user.roles.includes('admin')) {
+                if (res.locals.user && res.locals.user.roles && !res.locals.user.roles.includes('admin')) {
             return res.status(403).json({ message: 'Доступ запрещён' })
         }
         
