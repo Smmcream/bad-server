@@ -44,6 +44,8 @@ app.use(cors({
     credentials: true,
 }))
 
+app.options('{*path}', cors())
+
 app.use(serveStatic(path.join(__dirname, 'public')))
 
 app.get('/auth/csrf-token', (req, res) => {
@@ -57,9 +59,7 @@ app.get('/auth/csrf-token', (req, res) => {
 
 //app.use('/auth/login', authLimiter)
 
-app.options('{*path}', cors())
-
-app.use('/api', routes)
+app.use(['/api', '/'], routes)
 
 app.use(errors())
 app.use(errorHandler)
@@ -72,7 +72,6 @@ const bootstrap = async () => {
         await app.listen(PORT, () => console.log(`✅ Сервер запущен на порту ${PORT}`))
     } catch (error) {
         console.error('❌ Ошибка при запуске сервера:', error)
-        // Не падаем, продолжаем работать
     }
 }
 
