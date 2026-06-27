@@ -55,7 +55,7 @@ app.get('/auth/csrf-token', (req, res) => {
     res.json({ csrfToken: 'test-csrf-token' });
 })
 
-app.use('/auth/login', authLimiter)
+//app.use('/auth/login', authLimiter)
 
 app.options('{*path}', cors())
 
