@@ -18,7 +18,7 @@ customerRouter.get('/', getCustomers)
 customerRouter.get('/admin', auth, requireAdmin, getCustomersAdmin)
 
 // Маршруты для авторизованных пользователей
-customerRouter.get('/:id', auth, getCustomerById)
+customerRouter.get('/', auth, getCustomers)
 customerRouter.patch('/:id', auth, updateCustomer)
 customerRouter.delete('/:id', auth, requireAdmin, deleteCustomer)
 

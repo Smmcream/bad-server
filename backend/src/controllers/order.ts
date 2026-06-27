@@ -148,11 +148,17 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 // GET /orders/all
 export const getOrdersCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Проверка на NoSQL-инъекцию в query-параметрах
-        for (const key of Object.keys(req.query)) {
-            if (key.includes('$')) {
-                return next(new BadRequestError('Недопустимые параметры запроса'))
+                // Проверка на NoSQL-инъекцию (глубокая)
+        const checkForDollar = (obj: any): boolean => {
+            if (typeof obj !== 'object' || obj === null) return false
+            for (const key of Object.keys(obj)) {
+                if (key.includes('$')) return true
+                if (typeof obj[key] === 'object' && checkForDollar(obj[key])) return true
             }
+            return false
+        }
+        if (checkForDollar(req.query)) {
+            return next(new BadRequestError('Недопустимые параметры запроса'))
         }
         
         const user = res.locals.user
