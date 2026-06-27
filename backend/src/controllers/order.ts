@@ -8,7 +8,14 @@ import User from '../models/user'
 
 // GET /orders - публичный
 export const getOrders = async (req: Request, res: Response, next: NextFunction) => {
-    try {
+        try {
+        // Проверка на NoSQL-инъекцию
+        for (const key of Object.keys(req.query)) {
+            if (key.includes('$')) {
+                return next(new BadRequestError('Недопустимые параметры запроса'))
+            }
+        }
+        
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', status, totalAmountFrom, totalAmountTo, orderDateFrom, orderDateTo, search } = req.query
 
         let limit = Number(req.query.limit) || 10

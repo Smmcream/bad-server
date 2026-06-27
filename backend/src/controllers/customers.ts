@@ -19,6 +19,11 @@ const safeRegexSearch = (search: string) => {
 // GET /customers
 export const getCustomers = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Проверка роли: только админы могут видеть всех пользователей
+        if (res.locals.user && !res.locals.user.roles.includes('admin')) {
+            return res.status(403).json({ message: 'Доступ запрещён' })
+        }
+        
         const { page = 1, sortField = 'createdAt', sortOrder = 'desc', registrationDateFrom, registrationDateTo, lastOrderDateFrom, lastOrderDateTo, totalAmountFrom, totalAmountTo, orderCountFrom, orderCountTo, search } = req.query
         const limit = normalizeLimit(req.query.limit, 10, 10)
         const filters: FilterQuery<Partial<IUser>> = {}

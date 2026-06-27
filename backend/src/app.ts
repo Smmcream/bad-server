@@ -24,7 +24,7 @@ app.use(urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 100 : 10,
+    max: process.env.NODE_ENV === 'test' ? 40 : 10,
     message: 'Слишком много запросов, попробуйте позже',
     standardHeaders: true,
     legacyHeaders: false,
