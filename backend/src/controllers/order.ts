@@ -136,8 +136,16 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 // GET /orders/all
 export const getOrdersCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Проверка на NoSQL-инъекцию в query-параметрах
+        for (const key of Object.keys(req.query)) {
+            if (key.includes('$')) {
+                return next(new BadRequestError('Недопустимые параметры запроса'))
+            }
+        }
+        
         const user = res.locals.user
-        const filter = user.roles.includes('admin') ? {} : { customer: user._id }
+        const isAdmin = user.roles && user.roles.includes('admin')
+        const filter = isAdmin ? {} : { customer: user._id }
         const orders = await Order.find(filter).populate('products')
         return res.status(200).json({ orders, pagination: { pageSize: orders.length } })
     } catch (error) {
