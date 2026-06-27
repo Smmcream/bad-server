@@ -12,7 +12,7 @@ import requireAdmin from '../middlewares/requireAdmin'
 const customerRouter = Router()
 
 // Требуют авторизации
-customerRouter.get('/', auth, getCustomers)
+customerRouter.get('/', getCustomers)
 
 // Маршруты для админов
 customerRouter.get('/admin', auth, requireAdmin, getCustomersAdmin)
